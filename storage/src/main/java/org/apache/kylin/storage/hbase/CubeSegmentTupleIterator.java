@@ -28,16 +28,14 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.NoSuchElementException;
 
-import org.apache.hadoop.hbase.client.HConnection;
-import org.apache.hadoop.hbase.client.HTableInterface;
+import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Scan;
+import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.client.metrics.ScanMetrics;
 import org.apache.hadoop.hbase.filter.Filter;
-import org.apache.hadoop.hbase.filter.FilterList;
-import org.apache.hadoop.hbase.filter.FuzzyRowFilter;
-import org.apache.hadoop.hbase.protobuf.ProtobufUtil;
 import org.apache.kylin.common.KylinConfig;
 import org.apache.kylin.common.persistence.StorageException;
 import org.apache.kylin.common.util.Array;
@@ -70,7 +68,6 @@ import com.google.common.collect.Maps;
 
 /**
  * @author xjiang
- * 
  */
 public class CubeSegmentTupleIterator implements ITupleIterator {
 
@@ -84,7 +81,7 @@ public class CubeSegmentTupleIterator implements ITupleIterator {
     private final List<RowValueDecoder> rowValueDecoders;
     private final StorageContext context;
     private final String tableName;
-    private final HTableInterface table;
+    private final Table table;
     private final RowKeyDecoder rowKeyDecoder;
     private final Iterator<HBaseKeyRange> rangeIterator;
 
@@ -105,7 +102,7 @@ public class CubeSegmentTupleIterator implements ITupleIterator {
     private int advMeasureRowsRemaining;
     private int advMeasureRowIndex;
 
-    public CubeSegmentTupleIterator(CubeSegment cubeSeg, List<HBaseKeyRange> keyRanges, HConnection conn, Collection<TblColRef> dimensions, TupleFilter filter, Collection<TblColRef> groupBy, List<RowValueDecoder> rowValueDecoders, StorageContext context) {
+    public CubeSegmentTupleIterator(CubeSegment cubeSeg, List<HBaseKeyRange> keyRanges, Connection conn, Collection<TblColRef> dimensions, TupleFilter filter, Collection<TblColRef> groupBy, List<RowValueDecoder> rowValueDecoders, StorageContext context) {
         this.cube = cubeSeg.getCubeInstance();
         this.cubeSeg = cubeSeg;
         this.dimensions = dimensions;
@@ -115,7 +112,7 @@ public class CubeSegmentTupleIterator implements ITupleIterator {
         this.context = context;
         this.tableName = cubeSeg.getStorageLocationIdentifier();
         this.rowKeyDecoder = new RowKeyDecoder(this.cubeSeg);
-        
+
         measureTypes = Lists.newArrayList();
         advMeasureFillers = Lists.newArrayListWithCapacity(1);
         advMeasureIndexInRV = Lists.newArrayListWithCapacity(1);
@@ -127,7 +124,7 @@ public class CubeSegmentTupleIterator implements ITupleIterator {
 
 
         try {
-            this.table = conn.getTable(tableName);
+            this.table = conn.getTable(TableName.valueOf(tableName));
         } catch (Throwable t) {
             throw new StorageException("Error when open connection to table " + tableName, t);
         }
@@ -144,9 +141,8 @@ public class CubeSegmentTupleIterator implements ITupleIterator {
 
         if (logger.isDebugEnabled() && scan != null) {
             logger.debug("Scan " + scan.toString());
-            byte[] metricsBytes = scan.getAttribute(Scan.SCAN_ATTRIBUTES_METRICS_DATA);
-            if (metricsBytes != null) {
-                ScanMetrics scanMetrics = ProtobufUtil.toScanMetrics(metricsBytes);
+            ScanMetrics scanMetrics = scan.getScanMetrics();
+            if (scanMetrics != null) {
                 logger.debug("HBase Metrics: " + "count={}, ms={}, bytes={}, remote_bytes={}, regions={}, not_serving_region={}, rpc={}, rpc_retries={}, remote_rpc={}, remote_rpc_retries={}", new Object[] { scanCount, scanMetrics.sumOfMillisSecBetweenNexts, scanMetrics.countOfBytesInResults, scanMetrics.countOfBytesInRemoteResults, scanMetrics.countOfRegions, scanMetrics.countOfNSRE, scanMetrics.countOfRPCcalls, scanMetrics.countOfRPCRetries, scanMetrics.countOfRemoteRPCcalls, scanMetrics.countOfRemoteRPCRetries });
             }
         }
@@ -303,7 +299,7 @@ public class CubeSegmentTupleIterator implements ITupleIterator {
     private Scan buildScan(HBaseKeyRange keyRange) {
         Scan scan = new Scan();
         tuneScanParameters(scan);
-        scan.setAttribute(Scan.SCAN_ATTRIBUTES_METRICS_ENABLE, Bytes.toBytes(Boolean.TRUE));
+        scan.setScanMetricsEnabled(true);
         for (RowValueDecoder valueDecoder : this.rowValueDecoders) {
             HBaseColumnDesc hbaseColumn = valueDecoder.getHBaseColumn();
             byte[] byteFamily = Bytes.toBytes(hbaseColumn.getColumnFamilyName());
@@ -317,7 +313,7 @@ public class CubeSegmentTupleIterator implements ITupleIterator {
 
     private void tuneScanParameters(Scan scan) {
         KylinConfig config = KylinConfig.getInstanceFromEnv();
-        
+
         scan.setCaching(config.getHBaseScanCacheRows());
         scan.setMaxResultSize(config.getHBaseScanMaxResultSize());
         scan.setCacheBlocks(true);
@@ -329,19 +325,27 @@ public class CubeSegmentTupleIterator implements ITupleIterator {
     }
 
     private void applyFuzzyFilter(Scan scan, HBaseKeyRange keyRange) {
-        List<Pair<byte[], byte[]>> fuzzyKeys = keyRange.getFuzzyKeys();
+
+        List<org.apache.kylin.common.util.Pair<byte[], byte[]>> fuzzyKeys = keyRange.getFuzzyKeys();
         if (fuzzyKeys != null && fuzzyKeys.size() > 0) {
-            FuzzyRowFilter rowFilter = new FuzzyRowFilter(convertToHBasePair(fuzzyKeys));
+
+            //https://issues.apache.org/jira/browse/HBASE-13761 introduced a bug in (2.0.0, 0.98.13, 1.0.2, 1.2.0, 1.1.1)
+            //and it was not fixed until https://issues.apache.org/jira/browse/HBASE-14269 (2.0.0, 1.2.0, 1.3.0, 0.98.15, 1.0.3, 1.1.3)
+            //if users' hbase version is withing the not-fixed-yet range, need to use the patched FuzzyRowFilter version
+            String patchedFuzzyRowFilterVersion = KylinConfig.getInstanceFromEnv().getPatchedFuzzyRowFilterVersion();
+            Filter fuzzyFilter = null;
+            if ("1.1.3".equals(patchedFuzzyRowFilterVersion)) {
+                //default behavior for this branch
+                fuzzyFilter = new org.apache.kylin.storage.hbase.filter.FuzzyRowFilter(convertToHBasePair(fuzzyKeys));
+            } else {
+                fuzzyFilter = new org.apache.hadoop.hbase.filter.FuzzyRowFilter(convertToHBasePair(fuzzyKeys));
+            }
 
             Filter filter = scan.getFilter();
             if (filter != null) {
-                // may have existed InclusiveStopFilter, see buildScan
-                FilterList filterList = new FilterList();
-                filterList.addFilter(filter);
-                filterList.addFilter(rowFilter);
-                scan.setFilter(filterList);
+                throw new RuntimeException("Scan filter not empty : " + filter);
             } else {
-                scan.setFilter(rowFilter);
+                scan.setFilter(fuzzyFilter);
             }
         }
     }

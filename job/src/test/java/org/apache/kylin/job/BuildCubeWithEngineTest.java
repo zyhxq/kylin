@@ -39,6 +39,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.kylin.common.KylinConfig;
 import org.apache.kylin.common.lock.ZookeeperJobLock;
+import org.apache.kylin.common.persistence.HBaseConnection;
 import org.apache.kylin.common.util.AbstractKylinTestCase;
 import org.apache.kylin.common.util.ClassUtil;
 import org.apache.kylin.common.util.HBaseMetadataTestCase;
@@ -310,7 +311,7 @@ public class BuildCubeWithEngineTest {
         Configuration conf = HadoopUtil.getCurrentHBaseConfiguration();
         String tableName = segment.getStorageLocationIdentifier();
         HTable table = new HTable(conf, tableName);
-        HBaseRegionSizeCalculator cal = new HBaseRegionSizeCalculator(table);
+        HBaseRegionSizeCalculator cal = new HBaseRegionSizeCalculator(tableName, HBaseConnection.get());
         Map<byte[], Long> sizeMap = cal.getRegionSizeMap();
         long totalSize = 0;
         for (Long size : sizeMap.values()) {

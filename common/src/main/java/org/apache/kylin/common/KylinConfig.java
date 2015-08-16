@@ -530,6 +530,11 @@ public class KylinConfig {
     public int getHBaseScanMaxResultSize() {
         return Integer.parseInt(this.getOptional("kylin.hbase.scan.max_result_size", "" + (5 * 1024 * 1024))); // 5 MB
     }
+    
+    public String getPatchedFuzzyRowFilterVersion()
+    {
+        return this.getOptional("kylin.hbase.filter.fuzzy.row.filter.version","1.1.3");
+    }
 
     public boolean isQueryIgnoreUnknownFunction() {
         return Boolean.parseBoolean(this.getOptional("kylin.query.ignore_unknown_function", "false"));
