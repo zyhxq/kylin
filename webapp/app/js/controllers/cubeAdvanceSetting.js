@@ -14,86 +14,86 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
-*/
+ */
 
 'use strict';
 
-KylinApp.controller('CubeAdvanceSettingCtrl', function ($scope, $modal,cubeConfig,MetaModel,cubesManager) {
-    $scope.cubesManager = cubesManager;
+KylinApp.controller('CubeAdvanceSettingCtrl', function ($scope, $modal, cubeConfig, MetaModel, cubesManager) {
+  $scope.cubesManager = cubesManager;
 
-    //convert some undefined or null value
-    angular.forEach($scope.cubeMetaFrame.rowkey.rowkey_columns,function(rowkey){
-            if(!rowkey.dictionary){
-                rowkey.dictionary = "false";
-            }
-        }
-    );
-    //edit model
-    if($scope.state.mode==="edit") {
-        $scope.metaModel = MetaModel;
-      if(!$scope.cubeMetaFrame.auto_merge_time_ranges){
-        $scope.cubeMetaFrame.auto_merge_time_ranges = [];
+  //convert some undefined or null value
+  angular.forEach($scope.cubeMetaFrame.rowkey.rowkey_columns, function (rowkey) {
+      if (!rowkey.dictionary) {
+        rowkey.dictionary = "false";
       }
-      $scope._auto_merge_time_ranges = [];
-      angular.forEach($scope.cubeMetaFrame.auto_merge_time_ranges,function(item){
-        var _day = Math.floor(item/86400000);
-        var _hour = (item%86400000)/3600000;
+    }
+  );
+  //edit model
+  if ($scope.state.mode === "edit") {
+    $scope.metaModel = MetaModel;
+    if (!$scope.cubeMetaFrame.auto_merge_time_ranges) {
+      $scope.cubeMetaFrame.auto_merge_time_ranges = [];
+    }
+    $scope._auto_merge_time_ranges = [];
+    angular.forEach($scope.cubeMetaFrame.auto_merge_time_ranges, function (item) {
+      var _day = Math.floor(item / 86400000);
+      var _hour = (item % 86400000) / 3600000;
 
-        var rangeObj = {
-          type:'days',
-          range:0,
-          mills:0
-        }
-        if(_day==0){
-          rangeObj.type = 'hours';
-          rangeObj.range = _hour;
-          rangeObj.mills = rangeObj.range*3600000;
-         }else{
-          rangeObj.type = 'days';
-          rangeObj.range = _day;
-          rangeObj.mills = rangeObj.range*86400000;
-        }
-        $scope._auto_merge_time_ranges.push(rangeObj);
-      })
+      var rangeObj = {
+        type: 'days',
+        range: 0,
+        mills: 0
+      }
+      if (_day == 0) {
+        rangeObj.type = 'hours';
+        rangeObj.range = _hour;
+        rangeObj.mills = rangeObj.range * 3600000;
+      } else {
+        rangeObj.type = 'days';
+        rangeObj.range = _day;
+        rangeObj.mills = rangeObj.range * 86400000;
+      }
+      $scope._auto_merge_time_ranges.push(rangeObj);
+    })
+  }
+
+
+  $scope.dictionaryUpdated = function (rowkey_column) {
+    if (rowkey_column.dictionary === "true") {
+      rowkey_column.length = 0;
     }
 
+  }
 
-    $scope.dictionaryUpdated = function(rowkey_column){
-        if(rowkey_column.dictionary==="true"){
-            rowkey_column.length=0;
-        }
-
-    }
-
-  $scope.addNewMergeTimeRange = function(){
+  $scope.addNewMergeTimeRange = function () {
     $scope._auto_merge_time_ranges.push({
-      type:'days',
-      range:0,
-      mills:0
+      type: 'days',
+      range: 0,
+      mills: 0
     })
     $scope.updateAutoMergeRange();
   }
 
-  $scope.removeTimeRange = function(arr,index,item){
+  $scope.removeTimeRange = function (arr, index, item) {
     if (index > -1) {
       arr.splice(index, 1);
     }
-    $scope.cubeMetaFrame.auto_merge_time_ranges.splice(index,1);
+    $scope.cubeMetaFrame.auto_merge_time_ranges.splice(index, 1);
   }
 
 
-  $scope.refreshAutoMergeTimeRanges = function(list,index,item){
-    if(item.type=='hours'){
-      item.mills = item.range*3600000;
-    }else{
-      item.mills = item.range*86400000;
+  $scope.refreshAutoMergeTimeRanges = function (list, index, item) {
+    if (item.type == 'hours') {
+      item.mills = item.range * 3600000;
+    } else {
+      item.mills = item.range * 86400000;
     }
     $scope.cubeMetaFrame.auto_merge_time_ranges[index] = item.mills;
   }
 
-  $scope.updateAutoMergeRange = function(){
+  $scope.updateAutoMergeRange = function () {
     $scope.cubeMetaFrame.auto_merge_time_ranges = [];
-    angular.forEach($scope._auto_merge_time_ranges,function(item){
+    angular.forEach($scope._auto_merge_time_ranges, function (item) {
       $scope.cubeMetaFrame.auto_merge_time_ranges.push(item.mills);
     })
   }
@@ -112,11 +112,14 @@ KylinApp.controller('CubeAdvanceSettingCtrl', function ($scope, $modal,cubeConfi
     $scope.cubeMetaFrame.rowkey.aggregation_groups.push([]);
   };
 
-  $scope.refreshAggregationGroup = function (list, index, aggregation_groups) {
-    if (aggregation_groups) {
-      list[index] = aggregation_groups;
+  $scope.refreshAggregationGroup = function (list, index, aggregation_group) {
+    if (aggregation_group) {
+      list[index].length = aggregation_group.length;
+      for (var i = 0; i < aggregation_group.length; i++) {
+        list[index][i] = aggregation_group[i];
+      }
     }
-  };
+  }
 
   $scope.removeElement = function (arr, element) {
     var index = arr.indexOf(element);

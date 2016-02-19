@@ -46,6 +46,7 @@
           ng-if="state.mode=='edit'"
           style="width: 100%"
           autofocus="true"
+          close-on-select="false"
           ng-model="modelsManager.selectedModel.metrics" multiple>
           <ui-select-match placeholder="Select Column...">{{$item.name}}</ui-select-match>
           <ui-select-choices
