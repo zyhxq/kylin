@@ -72,6 +72,7 @@
                       <ui-select
                         ng-if="state.mode=='edit'" style="width: 100%"
                         autofocus="true"
+                        close-on-select="false"
                         ng-model="modelsManager.selectedModel.dimensions[$index].columns" multiple>
                         <ui-select-match placeholder="Select Column...">{{$item.name}}</ui-select-match>
                         <ui-select-choices

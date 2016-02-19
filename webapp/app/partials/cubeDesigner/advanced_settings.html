@@ -40,6 +40,7 @@
 
                       <ui-select
                         autofocus="true"
+                        close-on-select="false"
                         on-select="refreshAggregationGroup(cubeMetaFrame.rowkey.aggregation_groups, $index, aggregation_groups)"
                         on-remove="refreshAggregationGroup(cubeMetaFrame.rowkey.aggregation_groups, $index, aggregation_groups)"
                         ng-if="state.mode=='edit'" style="width: 100%" multiple ng-model="aggregation_groups">
