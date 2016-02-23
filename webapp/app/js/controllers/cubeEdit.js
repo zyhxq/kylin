@@ -785,7 +785,7 @@ KylinApp.controller('CubeEditCtrl', function ($scope, $q, $routeParams, $locatio
   }
 
   $scope.$watch('projectModel.selectedProject', function (newValue, oldValue) {
-    if (!newValue) {
+    if(!$scope.projectModel.getSelectedProject()) {
       return;
     }
     var param = {
