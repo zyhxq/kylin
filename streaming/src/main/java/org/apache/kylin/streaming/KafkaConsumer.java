@@ -92,7 +92,10 @@ public class KafkaConsumer implements Runnable {
 
     private Broker getLeadBroker() {
         final PartitionMetadata partitionMetadata = KafkaRequester.getPartitionMetadata(topic, partitionId, replicaBrokers, streamingConfig);
-        if (partitionMetadata != null && partitionMetadata.errorCode() == 0) {
+        if (partitionMetadata != null) {
+            if (partitionMetadata.errorCode() != 0){
+                logger.warn("PartitionMetadata errorCode: "+partitionMetadata.errorCode());
+            }
             replicaBrokers = partitionMetadata.replicas();
             return partitionMetadata.leader();
         } else {
