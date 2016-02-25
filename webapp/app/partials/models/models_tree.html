@@ -46,8 +46,6 @@
 
         <ul class="list-group models-tree">
           <li class="list-group-item" ng-repeat="model in modelsManager.models">
-            <span class="strong"><a style="cursor: pointer;word-break:break-all;" ng-click="openModal(model)">{{model.name}}</a></span>
-
             <div class="pull-right" showonhoverparent style="display:none;" class="cube_model_trees">
 
               <a href="models/edit/{{model.name}}" title="Edit Model" ng-if="(userService.hasRole('ROLE_ADMIN') || hasPermission(model, permissions.ADMINISTRATION.mask, permissions.MANAGEMENT.mask, permissions.OPERATION.mask))"><span class="fa fa-pencil fa-lg fa-fw"></span></a>
@@ -55,6 +53,8 @@
               <a ng-click="dropModel(model)" title="Drop Model" style="cursor:pointer;margin-right: 8px;" ng-if="(userService.hasRole('ROLE_ADMIN') || hasPermission(model, permissions.ADMINISTRATION.mask, permissions.MANAGEMENT.mask, permissions.OPERATION.mask))"><span class="fa fa-trash-o fa-lg fa-fw"></span></a>
 
             </div>
+            <span class="strong"><a style="cursor: pointer;word-break:break-all;" ng-click="openModal(model)">{{model.name}}</a></span>
+
 
           </li>
         </ul>
