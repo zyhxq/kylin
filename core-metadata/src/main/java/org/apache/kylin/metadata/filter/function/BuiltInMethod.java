@@ -53,13 +53,17 @@ public enum BuiltInMethod {
         this.method = MethodUtils.getMatchingAccessibleMethod(clazz, methodName, argumentTypes);
     }
 
-    /** SQL {@code LIKE} function. */
+    /**
+     * SQL {@code LIKE} function.
+     */
     public static boolean like(String s, String pattern) {
         final String regex = Like.sqlToRegexLike(pattern, null);
         return Pattern.matches(regex, s);
     }
 
-    /** SQL INITCAP(string) function. */
+    /**
+     * SQL INITCAP(string) function.
+     */
     public static String initcap(String s) {
         // Assumes Alpha as [A-Za-z0-9]
         // white space is treated as everything else.
@@ -96,22 +100,30 @@ public enum BuiltInMethod {
         return newS.toString();
     }
 
-    /** SQL CHARACTER_LENGTH(string) function. */
+    /**
+     * SQL CHARACTER_LENGTH(string) function.
+     */
     public static int charLength(String s) {
         return s.length();
     }
 
-    /** SQL SUBSTRING(string FROM ... FOR ...) function. */
+    /**
+     * SQL SUBSTRING(string FROM ... FOR ...) function.
+     */
     public static String substring(String s, int from, int for_) {
         return s.substring(from - 1, Math.min(from - 1 + for_, s.length()));
     }
 
-    /** SQL UPPER(string) function. */
+    /**
+     * SQL UPPER(string) function.
+     */
     public static String upper(String s) {
         return s.toUpperCase();
     }
 
-    /** SQL LOWER(string) function. */
+    /**
+     * SQL LOWER(string) function.
+     */
     public static String lower(String s) {
         return s.toLowerCase();
     }

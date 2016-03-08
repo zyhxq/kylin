@@ -18,12 +18,9 @@
 
 package org.apache.kylin.storage.cache;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.IdentityHashMap;
-import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
-
+import com.google.common.collect.Lists;
+import com.google.common.collect.Range;
+import net.sf.ehcache.CacheManager;
 import org.apache.kylin.common.KylinConfig;
 import org.apache.kylin.common.util.IdentityUtils;
 import org.apache.kylin.metadata.filter.TupleFilter;
@@ -38,21 +35,38 @@ import org.apache.kylin.storage.ICachableStorageQuery;
 import org.apache.kylin.storage.StorageContext;
 import org.apache.kylin.storage.tuple.Tuple;
 import org.apache.kylin.storage.tuple.TupleInfo;
+import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import com.google.common.collect.Lists;
-import com.google.common.collect.Range;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.IdentityHashMap;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  */
 public class StaticCacheTest {
+    private static CacheManager cacheManager;
+
+
     @BeforeClass
     public static void setup() {
         System.setProperty(KylinConfig.KYLIN_CONF, "../examples/test_case_data/sandbox");
         KylinConfig.getInstanceFromEnv().setProperty("kylin.query.cache.threshold.duration", "0");
+
+        cacheManager = CacheManager.newInstance("../server/src/main/resources/ehcache-test.xml");
+        AbstractCacheFledgedQuery.setCacheManager(cacheManager);
     }
+
+    @AfterClass
+    public static void tearDownResource() {
+        cacheManager.shutdown();
+        AbstractCacheFledgedQuery.setCacheManager(null);
+    }
+
 
     @Test
     public void basicTest() {
@@ -61,7 +75,7 @@ public class StaticCacheTest {
         final List<TblColRef> groups = StorageMockUtils.buildGroups();
         final List<FunctionDesc> aggregations = StorageMockUtils.buildAggregations();
         final TupleFilter filter = StorageMockUtils.buildFilter1(groups.get(0));
-        final SQLDigest sqlDigest = new SQLDigest("default.test_kylin_fact", filter, null, Collections.<TblColRef> emptySet(), groups, Collections.<TblColRef> emptySet(), Collections.<TblColRef> emptySet(), aggregations, new ArrayList<MeasureDesc>(), new ArrayList<SQLDigest.OrderEnum>());
+        final SQLDigest sqlDigest = new SQLDigest("default.test_kylin_fact", filter, null, Collections.<TblColRef>emptySet(), groups, Collections.<TblColRef>emptySet(), Collections.<TblColRef>emptySet(), aggregations, new ArrayList<MeasureDesc>(), new ArrayList<SQLDigest.OrderEnum>());
         final TupleInfo tupleInfo = StorageMockUtils.newTupleInfo(groups, aggregations);
 
         final List<ITuple> ret = Lists.newArrayList();
