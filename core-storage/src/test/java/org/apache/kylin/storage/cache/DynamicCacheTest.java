@@ -18,11 +18,10 @@
 
 package org.apache.kylin.storage.cache;
 
-import java.util.ArrayList;
-import java.util.IdentityHashMap;
-import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
-
+import com.google.common.collect.Lists;
+import com.google.common.collect.Range;
+import com.google.common.collect.Ranges;
+import net.sf.ehcache.CacheManager;
 import org.apache.commons.lang.NotImplementedException;
 import org.apache.kylin.common.KylinConfig;
 import org.apache.kylin.common.util.DateFormat;
@@ -38,22 +37,36 @@ import org.apache.kylin.storage.ICachableStorageQuery;
 import org.apache.kylin.storage.StorageContext;
 import org.apache.kylin.storage.tuple.Tuple;
 import org.apache.kylin.storage.tuple.TupleInfo;
+import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import com.google.common.collect.Lists;
-import com.google.common.collect.Range;
-import com.google.common.collect.Ranges;
+import java.util.ArrayList;
+import java.util.IdentityHashMap;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  */
 public class DynamicCacheTest {
 
+    private static CacheManager cacheManager;
+
+
     @BeforeClass
     public static void setup() {
         System.setProperty(KylinConfig.KYLIN_CONF, "../examples/test_case_data/sandbox");
         KylinConfig.getInstanceFromEnv().setProperty("kylin.query.cache.threshold.duration", "0");
+
+        cacheManager = CacheManager.newInstance("../server/src/main/resources/ehcache-test.xml");
+        AbstractCacheFledgedQuery.setCacheManager(cacheManager);
+    }
+
+    @AfterClass
+    public static void tearDownResource() {
+        cacheManager.shutdown();
+        AbstractCacheFledgedQuery.setCacheManager(null);
     }
 
 
@@ -105,7 +118,7 @@ public class DynamicCacheTest {
         final List<FunctionDesc> aggregations = StorageMockUtils.buildAggregations();
         final TupleInfo tupleInfo = StorageMockUtils.newTupleInfo(groups, aggregations);
 
-        SQLDigest sqlDigest = new SQLDigest("default.test_kylin_fact", null, null, Lists.<TblColRef> newArrayList(), groups, Lists.newArrayList(partitionCol), Lists.<TblColRef> newArrayList(), aggregations, new ArrayList<MeasureDesc>(), new ArrayList<SQLDigest.OrderEnum>());
+        SQLDigest sqlDigest = new SQLDigest("default.test_kylin_fact", null, null, Lists.<TblColRef>newArrayList(), groups, Lists.newArrayList(partitionCol), Lists.<TblColRef>newArrayList(), aggregations, new ArrayList<MeasureDesc>(), new ArrayList<SQLDigest.OrderEnum>());
 
         ITuple aTuple = new TsOnlyTuple(partitionCol, "2011-02-01");
         ITuple bTuple = new TsOnlyTuple(partitionCol, "2012-02-01");

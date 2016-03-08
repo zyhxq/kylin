@@ -18,12 +18,7 @@
 
 package org.apache.kylin.storage.hbase;
 
-import static org.junit.Assert.*;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-
+import net.sf.ehcache.CacheManager;
 import org.apache.kylin.common.KylinConfig;
 import org.apache.kylin.common.util.HBaseMetadataTestCase;
 import org.apache.kylin.cube.CubeInstance;
@@ -38,6 +33,7 @@ import org.apache.kylin.metadata.tuple.ITupleIterator;
 import org.apache.kylin.storage.IStorageQuery;
 import org.apache.kylin.storage.StorageContext;
 import org.apache.kylin.storage.StorageFactory;
+import org.apache.kylin.storage.cache.AbstractCacheFledgedQuery;
 import org.apache.kylin.storage.cache.StorageMockUtils;
 import org.apache.kylin.storage.exception.ScanOutOfLimitException;
 import org.junit.After;
@@ -48,7 +44,15 @@ import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
+import static org.junit.Assert.assertTrue;
+
 public class ITStorageTest extends HBaseMetadataTestCase {
+    private static CacheManager cacheManager;
+
 
     private IStorageQuery storageEngine;
     private CubeInstance cube;
@@ -56,10 +60,14 @@ public class ITStorageTest extends HBaseMetadataTestCase {
 
     @BeforeClass
     public static void setupResource() throws Exception {
+        cacheManager = CacheManager.newInstance("../server/src/main/resources/ehcache-test.xml");
+        AbstractCacheFledgedQuery.setCacheManager(cacheManager);
     }
 
     @AfterClass
     public static void tearDownResource() {
+        cacheManager.shutdown();
+        AbstractCacheFledgedQuery.setCacheManager(null);
     }
 
     @Before
@@ -144,7 +152,7 @@ public class ITStorageTest extends HBaseMetadataTestCase {
         int count = 0;
         ITupleIterator iterator = null;
         try {
-            SQLDigest sqlDigest = new SQLDigest("default.test_kylin_fact", filter, null, Collections.<TblColRef> emptySet(), groups, Collections.<TblColRef> emptySet(), Collections.<TblColRef> emptySet(), aggregations, new ArrayList<MeasureDesc>(), new ArrayList<SQLDigest.OrderEnum>());
+            SQLDigest sqlDigest = new SQLDigest("default.test_kylin_fact", filter, null, Collections.<TblColRef>emptySet(), groups, Collections.<TblColRef>emptySet(), Collections.<TblColRef>emptySet(), aggregations, new ArrayList<MeasureDesc>(), new ArrayList<SQLDigest.OrderEnum>());
             iterator = storageEngine.search(context, sqlDigest, StorageMockUtils.newTupleInfo(groups, aggregations));
             while (iterator.hasNext()) {
                 ITuple tuple = iterator.next();
