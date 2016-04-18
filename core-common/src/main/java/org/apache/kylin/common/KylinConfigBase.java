@@ -173,10 +173,7 @@ public class KylinConfigBase implements Serializable {
         if (!root.endsWith("/")) {
             root += "/";
         }
-        return new StringBuffer(root)
-                .append(StringUtils.replaceChars(getMetadataUrlPrefix(), ':', '-'))
-                .append("/")
-                .toString();
+        return new StringBuffer(root).append(StringUtils.replaceChars(getMetadataUrlPrefix(), ':', '-')).append("/").toString();
     }
 
     public CliCommandExecutor getCliCommandExecutor() throws IOException {
@@ -485,7 +482,7 @@ public class KylinConfigBase implements Serializable {
     public boolean isGetJobStatusWithKerberos() {
         return Boolean.valueOf(this.getOptional("kylin.job.status.with.kerberos", "false"));
     }
-    
+
     public boolean isTransformPathToMasterNN() {
         return Boolean.valueOf(this.getOptional("kylin.transform.hdfs.path.enable", "false"));
     }
@@ -524,6 +521,10 @@ public class KylinConfigBase implements Serializable {
 
     public String getMailSender() {
         return getOptional("mail.sender", "");
+    }
+
+    public String getDeployEnv() {
+        return getOptional("deploy.env", "DEV");
     }
 
     public String toString() {
