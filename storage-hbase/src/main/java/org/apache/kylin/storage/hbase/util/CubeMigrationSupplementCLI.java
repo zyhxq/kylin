@@ -35,8 +35,8 @@ import com.google.common.collect.Lists;
 /**
  * <p/>
  * This tool serves for the purpose of
- * checking the "KYLIN_HOST" property to be consistent with the dst's MetadataUrlPrefix
- * for all of cube segments' corresponding HTables after migrating a cube
+ * copying all of the cube segment statistics after an old version of migration
+ * without copying the cube segment statistics
  * <p/>
  */
 public class CubeMigrationSupplementCLI {
