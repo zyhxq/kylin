@@ -101,7 +101,13 @@ public final class KafkaRequester {
             consumer = getSimpleConsumer(broker, kafkaClusterConfig.getTimeout(), kafkaClusterConfig.getBufferSize(), "topic_meta_lookup");
             List<String> topics = Collections.singletonList(kafkaClusterConfig.getTopic());
             TopicMetadataRequest req = new TopicMetadataRequest(topics);
-            TopicMetadataResponse resp = consumer.send(req);
+            TopicMetadataResponse resp;
+            try{
+                resp = consumer.send(req);
+            }catch (Exception e){
+                logger.warn("cannot send TopicMetadataRequest successfully: " + e);
+                continue;
+            }
             final List<TopicMetadata> topicMetadatas = resp.topicsMetadata();
             if (topicMetadatas.size() != 1) {
                 break;
@@ -129,7 +135,13 @@ public final class KafkaRequester {
             consumer = getSimpleConsumer(broker, kafkaClusterConfig.getTimeout(), kafkaClusterConfig.getBufferSize(), "topic_meta_lookup");
             List<String> topics = Collections.singletonList(topic);
             TopicMetadataRequest req = new TopicMetadataRequest(topics);
-            TopicMetadataResponse resp = consumer.send(req);
+            TopicMetadataResponse resp;
+            try{
+                resp = consumer.send(req);
+            }catch (Exception e){
+                logger.warn("cannot send TopicMetadataRequest successfully: " + e);
+                continue;
+            }
             final List<TopicMetadata> topicMetadatas = resp.topicsMetadata();
             if (topicMetadatas.size() != 1) {
                 logger.warn("invalid topicMetadata size:" + topicMetadatas.size());
