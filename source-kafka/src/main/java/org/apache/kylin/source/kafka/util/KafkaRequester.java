@@ -130,6 +130,7 @@ public final class KafkaRequester {
     }
 
     public static PartitionMetadata getPartitionMetadata(String topic, int partitionId, List<Broker> brokers, KafkaClusterConfig kafkaClusterConfig) {
+        logger.debug("Brokers: " + brokers.toString());
         SimpleConsumer consumer;
         for (Broker broker : brokers) {
             consumer = getSimpleConsumer(broker, kafkaClusterConfig.getTimeout(), kafkaClusterConfig.getBufferSize(), "topic_meta_lookup");
@@ -153,6 +154,11 @@ public final class KafkaRequester {
                 break;
             }
             for (PartitionMetadata partitionMetadata : topicMetadata.partitionsMetadata()) {
+                logger.debug("PartitionMetadata debug errorCode: " + partitionMetadata.errorCode());
+                logger.debug("PartitionMetadata debug partitionId: " + partitionMetadata.partitionId());
+                logger.debug("PartitionMetadata debug leader: " + partitionMetadata.leader());
+                logger.debug("PartitionMetadata debug ISR: " + partitionMetadata.isr());
+                logger.debug("PartitionMetadata debug replica: " + partitionMetadata.replicas());
                 if (partitionMetadata.partitionId() == partitionId) {
                     return partitionMetadata;
                 }
