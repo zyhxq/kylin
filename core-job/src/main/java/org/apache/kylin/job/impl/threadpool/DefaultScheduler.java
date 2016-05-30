@@ -175,7 +175,7 @@ public class DefaultScheduler implements Scheduler<AbstractExecutable>, Connecti
                 executableManager.updateJobOutput(executable.getId(), ExecutableState.ERROR, null, "scheduler initializing work to reset job to ERROR status");
             }
         }
-        executableManager.updateAllRunningJobsToError();
+        executableManager.resumeAllRunningJobs();
 
         Runtime.getRuntime().addShutdownHook(new Thread() {
             public void run() {
