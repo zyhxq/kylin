@@ -101,13 +101,8 @@ public class ConstantTupleFilter extends TupleFilter {
                 buffer = ByteBuffer.allocate(bufferSize);
                 int size = this.constantValues.size();
                 BytesUtil.writeVInt(size, buffer);
-                logger.info("constantValues.size: {}", size);
                 for (Object val : this.constantValues) {
-                    if(! (val instanceof String)){
-                        logger.error("Problematic constant value:" + val);
-                    }
                     cs.serialize(val, buffer);
-                    logger.info("Buffer Position: {}", buffer.position());
                 }
                 break;
             }catch (BufferOverflowException e) {
