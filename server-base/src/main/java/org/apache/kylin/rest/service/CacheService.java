@@ -34,6 +34,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.kylin.common.KylinConfig;
 import org.apache.kylin.common.restclient.Broadcaster;
+import org.apache.kylin.common.restclient.Broadcaster.Event;
 import org.apache.kylin.cube.CubeDescManager;
 import org.apache.kylin.cube.CubeInstance;
 import org.apache.kylin.cube.CubeManager;
@@ -66,7 +67,7 @@ public class CacheService extends BasicService {
 
     private static final Logger logger = LoggerFactory.getLogger(CacheService.class);
 
-    private static ConcurrentMap<String, DataSource> olapDataSources = new ConcurrentHashMap<String, DataSource>();
+    private ConcurrentMap<String, DataSource> olapDataSources = new ConcurrentHashMap<String, DataSource>();
 
     @Autowired
     private CubeService cubeService;
@@ -75,25 +76,32 @@ public class CacheService extends BasicService {
     private CacheManager cacheManager;
 
     @PostConstruct
-    public void initCubeChangeListener() throws IOException {
-        CubeManager cubeMgr = CubeManager.getInstance(getConfig());
-        cubeMgr.setCubeChangeListener(new CubeManager.CubeChangeListener() {
-
+    public void initCacheListener() throws IOException {
+        
+        Broadcaster.getInstance(getConfig()).registerListener(new Broadcaster.Listener() {
             @Override
-            public void afterCubeCreate(CubeInstance cube) {
-                // no cache need change
-            }
+            public void notify(String entity, Event event, String cacheKey) throws IOException {
+                switch (entity) {
+                case "cube":
+                    String cubeName = cacheKey;
+                    CubeInstance cube = getCubeManager().getCube(cubeName);
 
-            @Override
-            public void afterCubeUpdate(CubeInstance cube) {
-                rebuildCubeCache(cube.getName());
+                    cleanDataCache(cube.getUuid());
+                    for (ProjectInstance prj : getProjectManager().findProjects(RealizationType.CUBE, cubeName)) {
+                        removeOLAPDataSource(prj.getName());
+                    }
+                    break;
+                case "project":
+                    removeOLAPDataSource(cacheKey);
+                    break;
+                }
             }
-
+            
             @Override
-            public void afterCubeDelete(CubeInstance cube) {
-                removeCubeCache(cube.getName(), cube);
+            public void clearAll() throws IOException {
+                
             }
-        });
+        }, "cube", "project");
     }
 
     // for test
@@ -120,7 +128,7 @@ public class CacheService extends BasicService {
         }
     }
 
-    private static void removeOLAPDataSource(String project) {
+    private void removeOLAPDataSource(String project) {
         logger.info("removeOLAPDataSource is called for project " + project);
         if (StringUtils.isEmpty(project))
             throw new IllegalArgumentException("removeOLAPDataSource: project name not given");
@@ -129,7 +137,7 @@ public class CacheService extends BasicService {
         olapDataSources.remove(project);
     }
 
-    public static void removeAllOLAPDataSources() {
+    public void removeAllOLAPDataSources() {
         // brutal, yet simplest way
         logger.info("removeAllOLAPDataSources is called.");
         olapDataSources.clear();
@@ -166,40 +174,36 @@ public class CacheService extends BasicService {
         return ret;
     }
 
-    public void rebuildCache(Broadcaster.TYPE cacheType, String cacheKey) {
-        final String log = "rebuild cache type: " + cacheType + " name:" + cacheKey;
+    public void rebuildCache(String entity, String cacheKey) {
+        final String log = "rebuild cache type: " + entity + " name:" + cacheKey;
         logger.info(log);
         try {
-            switch (cacheType) {
-            case CUBE:
+            switch (entity) {
+            case "cube":
                 rebuildCubeCache(cacheKey);
                 break;
-            case STREAMING:
-                getStreamingManager().reloadStreamingConfigLocal(cacheKey);
+            case "streaming":
+                
                 break;
-            case KAFKA:
-                getKafkaManager().reloadKafkaConfigLocal(cacheKey);
+            case "kafka":
+                
                 break;
-            case CUBE_DESC:
-                getCubeDescManager().reloadCubeDescLocal(cacheKey);
+            case "cube_desc":
+                
                 break;
-            case PROJECT:
+            case "project":
                 reloadProjectCache(cacheKey);
                 break;
-            case TABLE:
-                getMetadataManager().reloadTableCache(cacheKey);
-                CubeDescManager.clearCache();
+            case "table":
                 clearRealizationCache();
                 break;
-            case EXTERNAL_FILTER:
-                getMetadataManager().reloadExtFilter(cacheKey);
-                CubeDescManager.clearCache();
+            case "external_filter":
+                
                 break;
-            case DATA_MODEL:
-                getMetadataManager().reloadDataModelDesc(cacheKey);
-                CubeDescManager.clearCache();
+            case "data_model":
+                
                 break;
-            case ALL:
+            case "all":
                 DictionaryManager.clearCache();
                 MetadataManager.clearCache();
                 CubeDescManager.clearCache();
@@ -214,7 +218,7 @@ public class CacheService extends BasicService {
                 removeAllOLAPDataSources();
                 break;
             default:
-                logger.error("invalid cacheType:" + cacheType);
+                logger.error("invalid cacheType:" + entity);
             }
         } catch (IOException e) {
             throw new RuntimeException("error " + log, e);
@@ -228,9 +232,9 @@ public class CacheService extends BasicService {
     }
 
     private void rebuildCubeCache(String cubeName) {
-        CubeInstance cube = getCubeManager().reloadCubeLocal(cubeName);
-        getHybridManager().reloadHybridInstanceByChild(RealizationType.CUBE, cubeName);
-        reloadProjectCache(getProjectManager().findProjects(RealizationType.CUBE, cubeName));
+        //CubeInstance cube = getCubeManager().reloadCubeLocal(cubeName);
+        //getHybridManager().reloadHybridInstanceByChild(RealizationType.CUBE, cubeName);
+        //reloadProjectCache(getProjectManager().findProjects(RealizationType.CUBE, cubeName));
         //clean query related cache first
         if (cube != null) {
             cleanDataCache(cube.getUuid());
@@ -238,28 +242,28 @@ public class CacheService extends BasicService {
         cubeService.updateOnNewSegmentReady(cubeName);
     }
 
-    public void removeCache(Broadcaster.TYPE cacheType, String cacheKey) {
-        final String log = "remove cache type: " + cacheType + " name:" + cacheKey;
+    public void removeCache(String entity, String cacheKey) {
+        final String log = "remove cache type: " + entity + " name:" + cacheKey;
         try {
-            switch (cacheType) {
-            case CUBE:
+            switch (entity) {
+            case "cube":
                 removeCubeCache(cacheKey, null);
                 break;
-            case CUBE_DESC:
+            case "cube_desc":
                 getCubeDescManager().removeLocalCubeDesc(cacheKey);
                 break;
-            case PROJECT:
+            case "project":
                 ProjectManager.clearCache();
                 break;
-            case TABLE:
+            case "table":
                 throw new UnsupportedOperationException(log);
-            case EXTERNAL_FILTER:
+            case "external_filter":
                 throw new UnsupportedOperationException(log);
-            case DATA_MODEL:
+            case "data_model":
                 getMetadataManager().removeModelCache(cacheKey);
                 break;
             default:
-                throw new RuntimeException("invalid cacheType:" + cacheType);
+                throw new RuntimeException("invalid cacheType:" + entity);
             }
         } catch (IOException e) {
             throw new RuntimeException("error " + log, e);

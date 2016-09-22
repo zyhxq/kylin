@@ -28,9 +28,13 @@ import java.util.Map;
 import java.util.Set;
 import java.util.WeakHashMap;
 
+import javax.annotation.PostConstruct;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.kylin.common.KylinConfig;
+import org.apache.kylin.common.restclient.Broadcaster;
+import org.apache.kylin.common.restclient.Broadcaster.Event;
 import org.apache.kylin.common.util.Pair;
 import org.apache.kylin.cube.CubeInstance;
 import org.apache.kylin.cube.CubeManager;
@@ -91,6 +95,32 @@ public class CubeService extends BasicService {
 
     @Autowired
     private AccessService accessService;
+
+    @PostConstruct
+    public void initCacheListener() throws IOException {
+        Broadcaster.getInstance(getConfig()).registerListener(new Broadcaster.Listener() {
+            @Override
+            public void notify(String entity, Event event, String cacheKey) throws IOException {
+                if (event == Event.UPDATE) {
+                    final String cubeName = cacheKey;
+                    new Thread() { // do not block the event broadcast thread
+                        public void run() {
+                            try {
+                                Thread.sleep(1000);
+                                updateOnNewSegmentReady(cubeName);
+                            } catch (Throwable ex) {
+                                logger.error("Error in updateOnNewSegmentReady()", ex);
+                            }
+                        }
+                    }.run();
+                }
+            }
+            
+            @Override
+            public void clearAll() throws IOException {
+            }
+        }, "cube");
+    }
 
     @PostFilter(Constant.ACCESS_POST_FILTER_READ)
     public List<CubeInstance> listAllCubes(final String cubeName, final String projectName, final String modelName) {

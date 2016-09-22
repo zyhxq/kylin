@@ -115,22 +115,21 @@ public class CacheServiceTest extends LocalFileMetadataTestCase {
 
         context.addServlet(new ServletHolder(new BroadcasterReceiveServlet(new BroadcasterReceiveServlet.BroadcasterHandler() {
             @Override
-            public void handle(String type, String name, String event) {
+            public void handle(String entity, String cacheKey, String event) {
 
-                Broadcaster.TYPE wipeType = Broadcaster.TYPE.getType(type);
-                Broadcaster.EVENT wipeEvent = Broadcaster.EVENT.getEvent(event);
-                final String log = "wipe cache type: " + wipeType + " event:" + wipeEvent + " name:" + name;
+                Broadcaster.Event wipeEvent = Broadcaster.Event.getEvent(event);
+                final String log = "wipe cache type: " + entity + " event:" + wipeEvent + " name:" + cacheKey;
                 logger.info(log);
                 try {
                     switch (wipeEvent) {
                     case CREATE:
                     case UPDATE:
-                        serviceA.rebuildCache(wipeType, name);
-                        serviceB.rebuildCache(wipeType, name);
+                        serviceA.rebuildCache(entity, cacheKey);
+                        serviceB.rebuildCache(entity, cacheKey);
                         break;
                     case DROP:
-                        serviceA.removeCache(wipeType, name);
-                        serviceB.removeCache(wipeType, name);
+                        serviceA.removeCache(entity, cacheKey);
+                        serviceB.removeCache(entity, cacheKey);
                         break;
                     default:
                         throw new RuntimeException("invalid type:" + wipeEvent);

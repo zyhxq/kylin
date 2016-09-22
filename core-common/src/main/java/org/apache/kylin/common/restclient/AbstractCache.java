@@ -21,17 +21,15 @@ package org.apache.kylin.common.restclient;
 import org.apache.kylin.common.KylinConfig;
 
 /**
- * @author xjiang
- * 
  */
-public abstract class AbstractRestCache<K, V> {
+public abstract class AbstractCache<K, V> {
 
     protected final KylinConfig config;
-    protected final Broadcaster.TYPE syncType;
+    protected final String syncEntity;
 
-    protected AbstractRestCache(KylinConfig config, Broadcaster.TYPE syncType) {
+    protected AbstractCache(KylinConfig config, String syncEntity) {
         this.config = config;
-        this.syncType = syncType;
+        this.syncEntity = syncEntity;
     }
 
     public Broadcaster getBroadcaster() {

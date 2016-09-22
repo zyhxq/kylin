@@ -28,6 +28,7 @@ import org.apache.kylin.common.persistence.JsonSerializer;
 import org.apache.kylin.common.persistence.ResourceStore;
 import org.apache.kylin.common.persistence.Serializer;
 import org.apache.kylin.common.restclient.Broadcaster;
+import org.apache.kylin.common.restclient.Broadcaster.Event;
 import org.apache.kylin.common.restclient.CaseInsensitiveStringCache;
 import org.apache.kylin.cube.cuboid.Cuboid;
 import org.apache.kylin.cube.model.CubeDesc;
@@ -35,14 +36,17 @@ import org.apache.kylin.cube.model.validation.CubeMetadataValidator;
 import org.apache.kylin.cube.model.validation.ValidateContext;
 import org.apache.kylin.metadata.MetadataConstants;
 import org.apache.kylin.metadata.MetadataManager;
+import org.apache.kylin.metadata.project.ProjectInstance;
+import org.apache.kylin.metadata.project.ProjectManager;
+import org.apache.kylin.metadata.realization.IRealization;
 import org.apache.kylin.metadata.realization.RealizationStatusEnum;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
  * Manager class for CubeDesc; extracted from #CubeManager
+ * 
  * @author shaoshi
- *
  */
 public class CubeDescManager {
 
@@ -90,8 +94,43 @@ public class CubeDescManager {
     private CubeDescManager(KylinConfig config) throws IOException {
         logger.info("Initializing CubeDescManager with config " + config);
         this.config = config;
-        this.cubeDescMap = new CaseInsensitiveStringCache<CubeDesc>(config, Broadcaster.TYPE.CUBE_DESC);
+        this.cubeDescMap = new CaseInsensitiveStringCache<CubeDesc>(config, "cube_desc", new SyncListener());
         reloadAllCubeDesc();
+    }
+    
+    private class SyncListener extends Broadcaster.Listener {
+        
+        @Override
+        public void onClearAll(Broadcaster broadcaster) throws IOException {
+            clearCache();
+            Cuboid.clearCache();
+        }
+
+        @Override
+        public void onProjectSchemaChange(Broadcaster broadcaster, String project) throws IOException {
+            for (IRealization real : ProjectManager.getInstance(config).listAllRealizations(project)) {
+                if (real instanceof CubeInstance) {
+                    String descName = ((CubeInstance) real).getDescName();
+                    reloadCubeDescLocal(descName);        
+                }
+            }
+        }
+
+        @Override
+        public void onEntityChange(Broadcaster broadcaster, String entity, Event event, String cacheKey) throws IOException {
+            String cubeDescName = cacheKey;
+            CubeDesc cubeDesc = getCubeDesc(cubeDescName);
+            String modelName = cubeDesc == null ? null : cubeDesc.getModel().getName();
+            
+            if (event == Event.DROP)
+                removeLocalCubeDesc(cubeDescName);
+            else
+                reloadCubeDescLocal(cubeDescName);
+            
+            for (ProjectInstance prj : ProjectManager.getInstance(config).findProjectsByModel(modelName)) {
+                broadcaster.notifyProjectSchemaUpdate(prj.getName());
+            }
+        }
     }
 
     public CubeDesc getCubeDesc(String name) {

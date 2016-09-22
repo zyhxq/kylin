@@ -45,6 +45,7 @@ import org.apache.kylin.common.persistence.JsonSerializer;
 import org.apache.kylin.common.persistence.ResourceStore;
 import org.apache.kylin.common.persistence.Serializer;
 import org.apache.kylin.common.restclient.Broadcaster;
+import org.apache.kylin.common.restclient.Broadcaster.Event;
 import org.apache.kylin.common.restclient.CaseInsensitiveStringCache;
 import org.apache.kylin.metadata.MetadataConstants;
 import org.slf4j.Logger;
@@ -72,8 +73,23 @@ public class StreamingManager {
 
     private StreamingManager(KylinConfig config) throws IOException {
         this.config = config;
-        this.streamingMap = new CaseInsensitiveStringCache<StreamingConfig>(config, Broadcaster.TYPE.STREAMING);
+        this.streamingMap = new CaseInsensitiveStringCache<StreamingConfig>(config, "streaming", new SyncListener());
         reloadAllStreaming();
+    }
+
+    private class SyncListener implements Broadcaster.Listener {
+        @Override
+        public void clearAll() {
+            // TODO Auto-generated method stub
+            
+        }
+
+        @Override
+        public void notify(String entity, Event event, String cacheKey) throws IOException {
+            if (event == Event.CREATE || event == Event.UPDATE) {
+                reloadStreamingConfigLocal(cacheKey);
+            }
+        }
     }
 
     private ResourceStore getStore() {

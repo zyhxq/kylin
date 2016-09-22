@@ -45,6 +45,7 @@ import org.apache.kylin.common.persistence.JsonSerializer;
 import org.apache.kylin.common.persistence.ResourceStore;
 import org.apache.kylin.common.persistence.Serializer;
 import org.apache.kylin.common.restclient.Broadcaster;
+import org.apache.kylin.common.restclient.Broadcaster.Event;
 import org.apache.kylin.common.restclient.CaseInsensitiveStringCache;
 import org.apache.kylin.metadata.MetadataConstants;
 import org.apache.kylin.source.kafka.config.KafkaConfig;
@@ -73,8 +74,23 @@ public class KafkaConfigManager {
 
     private KafkaConfigManager(KylinConfig config) throws IOException {
         this.config = config;
-        this.kafkaMap = new CaseInsensitiveStringCache<KafkaConfig>(config, Broadcaster.TYPE.KAFKA);
+        this.kafkaMap = new CaseInsensitiveStringCache<KafkaConfig>(config, "kafka", new SyncListener());
         reloadAllKafkaConfig();
+    }
+
+    private class SyncListener implements Broadcaster.Listener {
+        @Override
+        public void clearAll() {
+            // TODO Auto-generated method stub
+            
+        }
+
+        @Override
+        public void notify(String entity, Event event, String cacheKey) throws IOException {
+            if (event == Event.CREATE || event == Event.UPDATE) {
+                reloadKafkaConfigLocal(cacheKey);
+            }
+        }
     }
 
     private ResourceStore getStore() {

@@ -40,6 +40,7 @@ import org.apache.kylin.common.persistence.JsonSerializer;
 import org.apache.kylin.common.persistence.ResourceStore;
 import org.apache.kylin.common.persistence.Serializer;
 import org.apache.kylin.common.restclient.Broadcaster;
+import org.apache.kylin.common.restclient.Broadcaster.Event;
 import org.apache.kylin.common.restclient.CaseInsensitiveStringCache;
 import org.apache.kylin.common.util.Dictionary;
 import org.apache.kylin.common.util.Pair;
@@ -55,6 +56,7 @@ import org.apache.kylin.metadata.MetadataManager;
 import org.apache.kylin.metadata.model.SegmentStatusEnum;
 import org.apache.kylin.metadata.model.TableDesc;
 import org.apache.kylin.metadata.model.TblColRef;
+import org.apache.kylin.metadata.project.ProjectInstance;
 import org.apache.kylin.metadata.project.ProjectManager;
 import org.apache.kylin.metadata.realization.IRealization;
 import org.apache.kylin.metadata.realization.IRealizationConstants;
@@ -130,8 +132,38 @@ public class CubeManager implements IRealizationProvider {
     private CubeManager(KylinConfig config) throws IOException {
         logger.info("Initializing CubeManager with config " + config);
         this.config = config;
-        this.cubeMap = new CaseInsensitiveStringCache<CubeInstance>(config, Broadcaster.TYPE.CUBE);
+        this.cubeMap = new CaseInsensitiveStringCache<CubeInstance>(config, "cube", new SyncListener());
         loadAllCubeInstance();
+    }
+
+    private class SyncListener extends Broadcaster.Listener {
+        @Override
+        public void onClearAll(Broadcaster broadcaster) throws IOException {
+            clearCache();
+        }
+
+        @Override
+        public void onProjectSchemaChange(Broadcaster broadcaster, String project) throws IOException {
+            for (IRealization real : ProjectManager.getInstance(config).listAllRealizations(project)) {
+                if (real instanceof CubeInstance) {
+                    reloadCubeLocal(real.getName());
+                }
+            }
+        }
+
+        @Override
+        public void onEntityChange(Broadcaster broadcaster, String entity, Event event, String cacheKey) throws IOException {
+            String cubeName = cacheKey;
+            
+            if (event == Event.DROP)
+                removeCubeLocal(cubeName);
+            else
+                reloadCubeLocal(cubeName);
+            
+            for (ProjectInstance prj : ProjectManager.getInstance(config).findProjects(RealizationType.CUBE, cubeName)) {
+                broadcaster.notifyProjectDataUpdate(prj.getName());
+            }
+        }
     }
 
     public List<CubeInstance> listAllCubes() {

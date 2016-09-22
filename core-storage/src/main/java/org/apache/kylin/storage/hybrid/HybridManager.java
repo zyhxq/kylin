@@ -28,6 +28,8 @@ import org.apache.kylin.common.persistence.JsonSerializer;
 import org.apache.kylin.common.persistence.ResourceStore;
 import org.apache.kylin.common.persistence.Serializer;
 import org.apache.kylin.common.restclient.Broadcaster;
+import org.apache.kylin.common.restclient.Broadcaster.Event;
+import org.apache.kylin.cube.CubeManager.SyncListener;
 import org.apache.kylin.common.restclient.CaseInsensitiveStringCache;
 import org.apache.kylin.metadata.project.RealizationEntry;
 import org.apache.kylin.metadata.realization.IRealization;
@@ -83,8 +85,32 @@ public class HybridManager implements IRealizationProvider {
     private HybridManager(KylinConfig config) throws IOException {
         logger.info("Initializing HybridManager with config " + config);
         this.config = config;
-        this.hybridMap = new CaseInsensitiveStringCache<HybridInstance>(config, Broadcaster.TYPE.HYBRID);
+        this.hybridMap = new CaseInsensitiveStringCache<HybridInstance>(config, "hybrid");
+        Broadcaster.getInstance(config).registerListener(new SyncListener(), "hybrid", "cube");
         loadAllHybridInstance();
+    }
+
+    private class SyncListener implements Broadcaster.Listener {
+        @Override
+        public void clearAll() {
+            // TODO Auto-generated method stub
+            
+        }
+
+        @Override
+        public void notify(String entity, Event event, String cacheKey) {
+            if (event == Event.CREATE || event == Event.UPDATE) {
+                switch (entity) {
+                case "hybrid":
+                    loadAllHybridInstance();
+                    break;
+                case "cube":
+                    reloadHybridInstanceByChild(RealizationType.CUBE, cacheKey);
+                    break;
+                }
+            }
+            
+        }
     }
 
     private void loadAllHybridInstance() throws IOException {

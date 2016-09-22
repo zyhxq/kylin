@@ -21,7 +21,7 @@ package org.apache.kylin.rest.controller;
 import java.io.IOException;
 
 import org.apache.kylin.common.restclient.Broadcaster;
-import org.apache.kylin.common.restclient.Broadcaster.EVENT;
+import org.apache.kylin.common.restclient.Broadcaster.Event;
 import org.apache.kylin.rest.service.CacheService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,31 +48,30 @@ public class CacheController extends BasicController {
     /**
      * Wipe system cache
      *
-     * @param type  {@link Broadcaster.TYPE}
-     * @param event {@link Broadcaster.EVENT}
-     * @param name
+     * @param entity  {@link Broadcaster.TYPE}
+     * @param event {@link Broadcaster.Event}
+     * @param cacheKey
      * @return if the action success
      * @throws IOException
      */
-    @RequestMapping(value = "/{type}/{name}/{event}", method = { RequestMethod.PUT })
+    @RequestMapping(value = "/{entity}/{cacheKey}/{event}", method = { RequestMethod.PUT })
     @ResponseBody
-    public void wipeCache(@PathVariable String type, @PathVariable String event, @PathVariable String name) throws IOException {
+    public void wipeCache(@PathVariable String entity, @PathVariable String event, @PathVariable String cacheKey) throws IOException {
 
-        Broadcaster.TYPE wipeType = Broadcaster.TYPE.getType(type);
-        EVENT wipeEvent = Broadcaster.EVENT.getEvent(event);
+        Event wipeEvent = Broadcaster.Event.getEvent(event);
 
-        logger.info("wipe cache type: " + wipeType + " event:" + wipeEvent + " name:" + name);
+        logger.info("wipe cache entity: " + entity + " event:" + wipeEvent + " cache key:" + cacheKey);
 
         switch (wipeEvent) {
         case CREATE:
         case UPDATE:
-            cacheService.rebuildCache(wipeType, name);
+            cacheService.rebuildCache(entity, cacheKey);
             break;
         case DROP:
-            cacheService.removeCache(wipeType, name);
+            cacheService.removeCache(entity, cacheKey);
             break;
         default:
-            throw new RuntimeException("invalid type:" + wipeEvent);
+            throw new RuntimeException("invalid event:" + wipeEvent);
         }
     }
 

@@ -26,8 +26,9 @@ import org.apache.kylin.common.KylinConfig;
  */
 public class CaseInsensitiveStringCache<V> extends SingleValueCache<String, V> {
 
-    public CaseInsensitiveStringCache(KylinConfig config, Broadcaster.TYPE syncType) {
-        super(config, syncType, new ConcurrentSkipListMap<String, V>(String.CASE_INSENSITIVE_ORDER));
+    public CaseInsensitiveStringCache(KylinConfig config, String syncEntity, Broadcaster.Listener listener) {
+        super(config, syncEntity, new ConcurrentSkipListMap<String, V>(String.CASE_INSENSITIVE_ORDER));
+        getBroadcaster().registerListener(listener, syncEntity);
     }
 
     @Override
