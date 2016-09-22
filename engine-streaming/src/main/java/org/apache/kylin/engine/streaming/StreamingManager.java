@@ -77,18 +77,18 @@ public class StreamingManager {
         reloadAllStreaming();
     }
 
-    private class SyncListener implements Broadcaster.Listener {
+    private class SyncListener extends Broadcaster.Listener {
         @Override
-        public void clearAll() {
-            // TODO Auto-generated method stub
-            
+        public void onClearAll(Broadcaster broadcaster) throws IOException {
+            clearCache();
         }
 
         @Override
-        public void notify(String entity, Event event, String cacheKey) throws IOException {
-            if (event == Event.CREATE || event == Event.UPDATE) {
+        public void onEntityChange(Broadcaster broadcaster, String entity, Event event, String cacheKey) throws IOException {
+            if (event == Event.DROP)
+                removeStreamingLocal(cacheKey);
+            else
                 reloadStreamingConfigLocal(cacheKey);
-            }
         }
     }
 

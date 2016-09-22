@@ -78,18 +78,18 @@ public class KafkaConfigManager {
         reloadAllKafkaConfig();
     }
 
-    private class SyncListener implements Broadcaster.Listener {
+    private class SyncListener extends Broadcaster.Listener {
         @Override
-        public void clearAll() {
-            // TODO Auto-generated method stub
-            
+        public void onClearAll(Broadcaster broadcaster) throws IOException {
+            clearCache();
         }
 
         @Override
-        public void notify(String entity, Event event, String cacheKey) throws IOException {
-            if (event == Event.CREATE || event == Event.UPDATE) {
+        public void onEntityChange(Broadcaster broadcaster, String entity, Event event, String cacheKey) throws IOException {
+            if (event == Event.DROP)
+                removeKafkaConfigLocal(cacheKey);
+            else
                 reloadKafkaConfigLocal(cacheKey);
-            }
         }
     }
 
@@ -215,6 +215,10 @@ public class KafkaConfigManager {
         kafkaMap.remove(kafkaConfig.getName());
     }
 
+    private void removeKafkaConfigLocal(String name) {
+        kafkaMap.remove(name);
+    }
+    
     private void reloadAllKafkaConfig() throws IOException {
         ResourceStore store = getStore();
         logger.info("Reloading Kafka Metadata from folder " + store.getReadableResourcePath(ResourceStore.KAFKA_RESOURCE_ROOT));

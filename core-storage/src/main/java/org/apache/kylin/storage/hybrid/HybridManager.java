@@ -29,8 +29,9 @@ import org.apache.kylin.common.persistence.ResourceStore;
 import org.apache.kylin.common.persistence.Serializer;
 import org.apache.kylin.common.restclient.Broadcaster;
 import org.apache.kylin.common.restclient.Broadcaster.Event;
-import org.apache.kylin.cube.CubeManager.SyncListener;
 import org.apache.kylin.common.restclient.CaseInsensitiveStringCache;
+import org.apache.kylin.metadata.project.ProjectInstance;
+import org.apache.kylin.metadata.project.ProjectManager;
 import org.apache.kylin.metadata.project.RealizationEntry;
 import org.apache.kylin.metadata.realization.IRealization;
 import org.apache.kylin.metadata.realization.IRealizationProvider;
@@ -85,42 +86,49 @@ public class HybridManager implements IRealizationProvider {
     private HybridManager(KylinConfig config) throws IOException {
         logger.info("Initializing HybridManager with config " + config);
         this.config = config;
-        this.hybridMap = new CaseInsensitiveStringCache<HybridInstance>(config, "hybrid");
-        Broadcaster.getInstance(config).registerListener(new SyncListener(), "hybrid", "cube");
-        loadAllHybridInstance();
+        this.hybridMap = new CaseInsensitiveStringCache<HybridInstance>(config, "hybrid", new SyncListener());
+        reloadAllHybridInstance();
     }
 
-    private class SyncListener implements Broadcaster.Listener {
+    private class SyncListener extends Broadcaster.Listener {
+        
         @Override
-        public void clearAll() {
-            // TODO Auto-generated method stub
-            
+        public void onClearAll(Broadcaster broadcaster) throws IOException {
+            clearCache();
         }
 
         @Override
-        public void notify(String entity, Event event, String cacheKey) {
-            if (event == Event.CREATE || event == Event.UPDATE) {
-                switch (entity) {
-                case "hybrid":
-                    loadAllHybridInstance();
-                    break;
-                case "cube":
-                    reloadHybridInstanceByChild(RealizationType.CUBE, cacheKey);
-                    break;
+        public void onProjectSchemaChange(Broadcaster broadcaster, String project) throws IOException {
+            for (IRealization real : ProjectManager.getInstance(config).listAllRealizations(project)) {
+                if (real instanceof HybridInstance) {
+                    reloadHybridInstance(real.getName());
                 }
             }
+        }
+
+        @Override
+        public void onEntityChange(Broadcaster broadcaster, String entity, Event event, String cacheKey) throws IOException {
+            String hybridName = cacheKey;
             
+            if (event == Event.DROP)
+                hybridMap.removeLocal(hybridName);
+            else
+                reloadHybridInstance(hybridName);
+            
+            for (ProjectInstance prj : ProjectManager.getInstance(config).findProjects(RealizationType.HYBRID, hybridName)) {
+                broadcaster.notifyProjectSchemaUpdate(prj.getName());
+            }
         }
     }
 
-    private void loadAllHybridInstance() throws IOException {
+    private void reloadAllHybridInstance() throws IOException {
         ResourceStore store = getStore();
         List<String> paths = store.collectResourceRecursively(ResourceStore.HYBRID_RESOURCE_ROOT, ".json");
 
         logger.debug("Loading Hybrid from folder " + store.getReadableResourcePath(ResourceStore.HYBRID_RESOURCE_ROOT));
 
         for (String path : paths) {
-            loadHybridInstance(path);
+            reloadHybridInstanceAt(path);
         }
 
         logger.debug("Loaded " + paths.size() + " Hybrid(s)");
@@ -137,11 +145,15 @@ public class HybridManager implements IRealizationProvider {
             }
 
             if (includes == true)
-                loadHybridInstance(HybridInstance.concatResourcePath(hybridInstance.getName()));
+                reloadHybridInstance(hybridInstance.getName());
         }
     }
 
-    private synchronized HybridInstance loadHybridInstance(String path) {
+    public void reloadHybridInstance(String name) {
+        reloadHybridInstanceAt(HybridInstance.concatResourcePath(name));
+    }
+    
+    private synchronized HybridInstance reloadHybridInstanceAt(String path) {
         ResourceStore store = getStore();
 
         HybridInstance hybridInstance = null;
