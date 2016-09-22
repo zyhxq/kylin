@@ -29,11 +29,11 @@ import org.apache.kylin.common.KylinConfig;
 import org.apache.kylin.common.persistence.JsonSerializer;
 import org.apache.kylin.common.persistence.ResourceStore;
 import org.apache.kylin.common.persistence.Serializer;
-import org.apache.kylin.common.restclient.Broadcaster;
-import org.apache.kylin.common.restclient.Broadcaster.Event;
-import org.apache.kylin.common.restclient.CaseInsensitiveStringCache;
 import org.apache.kylin.metadata.MetadataManager;
 import org.apache.kylin.metadata.badquery.BadQueryHistoryManager;
+import org.apache.kylin.metadata.cachesync.Broadcaster;
+import org.apache.kylin.metadata.cachesync.Broadcaster.Event;
+import org.apache.kylin.metadata.cachesync.CaseInsensitiveStringCache;
 import org.apache.kylin.metadata.model.ColumnDesc;
 import org.apache.kylin.metadata.model.ExternalFilterDesc;
 import org.apache.kylin.metadata.model.MeasureDesc;
@@ -88,22 +88,19 @@ public class ProjectManager {
     private ProjectManager(KylinConfig config) throws IOException {
         logger.info("Initializing ProjectManager with metadata url " + config);
         this.config = config;
-        this.projectMap = new CaseInsensitiveStringCache<ProjectInstance>(config, "project", new SyncListener());
+        this.projectMap = new CaseInsensitiveStringCache<ProjectInstance>(config, "project");
         this.l2Cache = new ProjectL2Cache(this);
 
+        // touch lower level metadata before registering my listener
         reloadAllProjects();
+        Broadcaster.getInstance(config).registerListener(new ProjectSyncListener(), "project");
     }
 
-    private class SyncListener extends Broadcaster.Listener {
+    private class ProjectSyncListener extends Broadcaster.Listener {
         
         @Override
         public void onClearAll(Broadcaster broadcaster) throws IOException {
             clearCache();
-        }
-
-        @Override
-        public void onProjectSchemaChange(Broadcaster broadcaster, String project) throws IOException {
-            reloadProjectLocal(project);
         }
 
         @Override

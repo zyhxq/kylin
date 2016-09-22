@@ -37,10 +37,10 @@ import org.apache.kylin.common.persistence.JsonSerializer;
 import org.apache.kylin.common.persistence.RawResource;
 import org.apache.kylin.common.persistence.ResourceStore;
 import org.apache.kylin.common.persistence.Serializer;
-import org.apache.kylin.common.restclient.Broadcaster;
-import org.apache.kylin.common.restclient.Broadcaster.Event;
-import org.apache.kylin.common.restclient.CaseInsensitiveStringCache;
 import org.apache.kylin.common.util.JsonUtil;
+import org.apache.kylin.metadata.cachesync.Broadcaster;
+import org.apache.kylin.metadata.cachesync.Broadcaster.Event;
+import org.apache.kylin.metadata.cachesync.CaseInsensitiveStringCache;
 import org.apache.kylin.metadata.model.ColumnDesc;
 import org.apache.kylin.metadata.model.DataModelDesc;
 import org.apache.kylin.metadata.model.ExternalFilterDesc;
@@ -254,15 +254,21 @@ public class MetadataManager {
 
     private void init(KylinConfig config) throws IOException {
         this.config = config;
-        this.srcTableMap = new CaseInsensitiveStringCache<>(config, "table", new SrcTableSyncListener());
-        this.srcTableExdMap = new CaseInsensitiveStringCache<>(config, "table_ext", new SrcTableExtSyncListener());
-        this.dataModelDescMap = new CaseInsensitiveStringCache<>(config, "data_model", new DataModelSyncListener());
-        this.extFilterMap = new CaseInsensitiveStringCache<>(config, "external_filter", new ExtFilterSyncListener());
+        this.srcTableMap = new CaseInsensitiveStringCache<>(config, "table");
+        this.srcTableExdMap = new CaseInsensitiveStringCache<>(config, "table_ext");
+        this.dataModelDescMap = new CaseInsensitiveStringCache<>(config, "data_model");
+        this.extFilterMap = new CaseInsensitiveStringCache<>(config, "external_filter");
 
         reloadAllSourceTable();
         reloadAllSourceTableExd();
         reloadAllDataModel();
         reloadAllExternalFilter();
+        
+        // touch lower level metadata before registering my listener
+        Broadcaster.getInstance(config).registerListener(new SrcTableSyncListener(), "table");
+        Broadcaster.getInstance(config).registerListener(new SrcTableExtSyncListener(), "table_ext");
+        Broadcaster.getInstance(config).registerListener(new DataModelSyncListener(), "data_model");
+        Broadcaster.getInstance(config).registerListener(new ExtFilterSyncListener(), "external_filter");
     }
 
     private class SrcTableSyncListener extends Broadcaster.Listener {

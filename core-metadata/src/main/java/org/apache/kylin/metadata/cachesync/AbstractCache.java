@@ -16,7 +16,7 @@
  * limitations under the License.
 */
 
-package org.apache.kylin.common.restclient;
+package org.apache.kylin.metadata.cachesync;
 
 import org.apache.kylin.common.KylinConfig;
 

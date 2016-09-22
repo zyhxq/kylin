@@ -16,7 +16,7 @@
  * limitations under the License.
 */
 
-package org.apache.kylin.common.restclient;
+package org.apache.kylin.metadata.cachesync;
 
 import java.util.concurrent.ConcurrentSkipListMap;
 
@@ -26,9 +26,8 @@ import org.apache.kylin.common.KylinConfig;
  */
 public class CaseInsensitiveStringCache<V> extends SingleValueCache<String, V> {
 
-    public CaseInsensitiveStringCache(KylinConfig config, String syncEntity, Broadcaster.Listener listener) {
+    public CaseInsensitiveStringCache(KylinConfig config, String syncEntity) {
         super(config, syncEntity, new ConcurrentSkipListMap<String, V>(String.CASE_INSENSITIVE_ORDER));
-        getBroadcaster().registerListener(listener, syncEntity);
     }
 
     @Override

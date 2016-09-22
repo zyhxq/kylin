@@ -16,7 +16,7 @@
  * limitations under the License.
 */
 
-package org.apache.kylin.common.restclient;
+package org.apache.kylin.metadata.cachesync;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -32,7 +32,9 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.kylin.common.KylinConfig;
+import org.apache.kylin.common.restclient.RestClient;
 import org.apache.kylin.common.util.DaemonThreadFactory;
+import org.apache.kylin.metadata.project.ProjectManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -47,9 +49,9 @@ public class Broadcaster {
 
     private static final Logger logger = LoggerFactory.getLogger(Broadcaster.class);
 
-    public static final String SYNC_ALL = "all";                   // the special entity to indicate clear all
+    public static final String SYNC_ALL = "all"; // the special entity to indicate clear all
     public static final String SYNC_PRJ_SCHEMA = "project_schema"; // the special entity to indicate project schema has change, e.g. table/model/cube_desc update
-    public static final String SYNC_PRJ_DATA = "project_data";     // the special entity to indicate project data has change, e.g. cube/raw_table update
+    public static final String SYNC_PRJ_DATA = "project_data"; // the special entity to indicate project data has change, e.g. cube/raw_table update
 
     // static cached instances
     private static final ConcurrentHashMap<KylinConfig, Broadcaster> CACHE = new ConcurrentHashMap<KylinConfig, Broadcaster>();
@@ -81,13 +83,15 @@ public class Broadcaster {
 
     // ============================================================================
 
-    private BlockingDeque<BroadcastEvent> broadcastEvents = new LinkedBlockingDeque<>();
+    private KylinConfig config;
 
+    private BlockingDeque<BroadcastEvent> broadcastEvents = new LinkedBlockingDeque<>();
+    private Map<String, List<Listener>> listenerMap = Maps.newConcurrentMap();
     private AtomicLong counter = new AtomicLong();
 
-    private Map<String, List<Listener>> listenerMap = Maps.newConcurrentMap();
-
     private Broadcaster(final KylinConfig config) {
+        this.config = config;
+
         final String[] nodes = config.getRestServers();
         if (nodes == null || nodes.length < 1) {
             logger.warn("There is no available rest server; check the 'kylin.rest.servers' config");
@@ -129,8 +133,15 @@ public class Broadcaster {
     }
 
     public void registerListener(Listener listener, String... entities) {
+        // ignore re-registration
+        List<Listener> all = listenerMap.get(SYNC_ALL);
+        if (all != null && all.contains(listener)) {
+            return;
+        }
+
         for (String entity : entities) {
-            addListener(entity, listener);
+            if (!StringUtils.isBlank(entity))
+                addListener(entity, listener);
         }
         addListener(SYNC_ALL, listener);
         addListener(SYNC_PRJ_SCHEMA, listener);
@@ -149,36 +160,42 @@ public class Broadcaster {
     public void notifyClearAll() throws IOException {
         notifyListener(SYNC_ALL, Event.UPDATE, SYNC_ALL);
     }
-    
+
     public void notifyProjectSchemaUpdate(String project) throws IOException {
         notifyListener(SYNC_PRJ_SCHEMA, Event.UPDATE, project);
     }
-    
+
     public void notifyProjectDataUpdate(String project) throws IOException {
         notifyListener(SYNC_PRJ_DATA, Event.UPDATE, project);
     }
-    
+
     public void notifyListener(String entity, Event event, String cacheKey) throws IOException {
         List<Listener> list = listenerMap.get(entity);
         if (list == null)
             return;
 
         switch (entity) {
-        case SYNC_ALL: 
-            for (Listener l : list)
+        case SYNC_ALL:
+            for (Listener l : list) {
                 l.onClearAll(this);
+            }
+            clearCache(); // clear broadcaster too in the end
             break;
-        case SYNC_PRJ_SCHEMA: 
-            for (Listener l : list)
+        case SYNC_PRJ_SCHEMA:
+            ProjectManager.getInstance(config).clearL2Cache();
+            for (Listener l : list) {
                 l.onProjectSchemaChange(this, cacheKey);
+            }
             break;
-        case SYNC_PRJ_DATA: 
-            for (Listener l : list)
+        case SYNC_PRJ_DATA:
+            for (Listener l : list) {
                 l.onProjectDataChange(this, cacheKey);
+            }
             break;
         default:
-            for (Listener l : list)
+            for (Listener l : list) {
                 l.onEntityChange(this, entity, event, cacheKey);
+            }
             break;
         }
     }
@@ -233,10 +250,10 @@ public class Broadcaster {
 
         public void onProjectSchemaChange(Broadcaster broadcaster, String project) throws IOException {
         }
-        
+
         public void onProjectDataChange(Broadcaster broadcaster, String project) throws IOException {
         }
-        
+
         public void onEntityChange(Broadcaster broadcaster, String entity, Event event, String cacheKey) throws IOException {
         }
     }

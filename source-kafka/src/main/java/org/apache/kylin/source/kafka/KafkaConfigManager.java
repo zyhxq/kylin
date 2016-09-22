@@ -44,10 +44,10 @@ import org.apache.kylin.common.KylinConfig;
 import org.apache.kylin.common.persistence.JsonSerializer;
 import org.apache.kylin.common.persistence.ResourceStore;
 import org.apache.kylin.common.persistence.Serializer;
-import org.apache.kylin.common.restclient.Broadcaster;
-import org.apache.kylin.common.restclient.Broadcaster.Event;
-import org.apache.kylin.common.restclient.CaseInsensitiveStringCache;
 import org.apache.kylin.metadata.MetadataConstants;
+import org.apache.kylin.metadata.cachesync.Broadcaster;
+import org.apache.kylin.metadata.cachesync.Broadcaster.Event;
+import org.apache.kylin.metadata.cachesync.CaseInsensitiveStringCache;
 import org.apache.kylin.source.kafka.config.KafkaConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -74,11 +74,14 @@ public class KafkaConfigManager {
 
     private KafkaConfigManager(KylinConfig config) throws IOException {
         this.config = config;
-        this.kafkaMap = new CaseInsensitiveStringCache<KafkaConfig>(config, "kafka", new SyncListener());
+        this.kafkaMap = new CaseInsensitiveStringCache<KafkaConfig>(config, "kafka");
+        
+        // touch lower level metadata before registering my listener
         reloadAllKafkaConfig();
+        Broadcaster.getInstance(config).registerListener(new KafkaSyncListener(), "kafka");
     }
 
-    private class SyncListener extends Broadcaster.Listener {
+    private class KafkaSyncListener extends Broadcaster.Listener {
         @Override
         public void onClearAll(Broadcaster broadcaster) throws IOException {
             clearCache();

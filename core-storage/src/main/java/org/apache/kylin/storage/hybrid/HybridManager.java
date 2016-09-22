@@ -27,9 +27,9 @@ import org.apache.kylin.common.KylinConfig;
 import org.apache.kylin.common.persistence.JsonSerializer;
 import org.apache.kylin.common.persistence.ResourceStore;
 import org.apache.kylin.common.persistence.Serializer;
-import org.apache.kylin.common.restclient.Broadcaster;
-import org.apache.kylin.common.restclient.Broadcaster.Event;
-import org.apache.kylin.common.restclient.CaseInsensitiveStringCache;
+import org.apache.kylin.metadata.cachesync.Broadcaster;
+import org.apache.kylin.metadata.cachesync.Broadcaster.Event;
+import org.apache.kylin.metadata.cachesync.CaseInsensitiveStringCache;
 import org.apache.kylin.metadata.project.ProjectInstance;
 import org.apache.kylin.metadata.project.ProjectManager;
 import org.apache.kylin.metadata.project.RealizationEntry;
@@ -86,11 +86,14 @@ public class HybridManager implements IRealizationProvider {
     private HybridManager(KylinConfig config) throws IOException {
         logger.info("Initializing HybridManager with config " + config);
         this.config = config;
-        this.hybridMap = new CaseInsensitiveStringCache<HybridInstance>(config, "hybrid", new SyncListener());
+        this.hybridMap = new CaseInsensitiveStringCache<HybridInstance>(config, "hybrid");
+        
+        // touch lower level metadata before registering my listener
         reloadAllHybridInstance();
+        Broadcaster.getInstance(config).registerListener(new HybridSyncListener(), "hybrid");
     }
 
-    private class SyncListener extends Broadcaster.Listener {
+    private class HybridSyncListener extends Broadcaster.Listener {
         
         @Override
         public void onClearAll(Broadcaster broadcaster) throws IOException {
