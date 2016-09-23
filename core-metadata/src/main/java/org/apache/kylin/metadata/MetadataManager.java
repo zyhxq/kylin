@@ -540,8 +540,8 @@ public class MetadataManager {
             dataModelDesc.init(config, this.getAllTablesMap());
             dataModelDescMap.putLocal(dataModelDesc.getName(), dataModelDesc);
             return dataModelDesc;
-        } catch (IOException e) {
-            throw new IllegalStateException("Error to load" + path, e);
+        } catch (Exception e) {
+            throw new IllegalStateException("Error to load " + path, e);
         }
     }
 
@@ -570,9 +570,10 @@ public class MetadataManager {
         String name = desc.getName();
         if (dataModelDescMap.containsKey(name))
             throw new IllegalArgumentException("DataModelDesc '" + name + "' already exists");
-        ProjectManager.getInstance(config).updateModelToProject(name, projectName);
         desc.setOwner(owner);
-        return saveDataModelDesc(desc);
+        desc = saveDataModelDesc(desc);
+        ProjectManager.getInstance(config).updateModelToProject(name, projectName);
+        return desc;
     }
 
     public DataModelDesc updateDataModelDesc(DataModelDesc desc) throws IOException {

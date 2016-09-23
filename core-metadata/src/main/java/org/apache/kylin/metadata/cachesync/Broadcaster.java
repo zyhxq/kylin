@@ -138,6 +138,7 @@ public class Broadcaster {
         if (all != null && all.contains(listener)) {
             return;
         }
+        logger.debug("registering no. " + (all == null ? 0 : all.size()) + " listener " + listener);
 
         for (String entity : entities) {
             if (!StringUtils.isBlank(entity))
@@ -173,7 +174,11 @@ public class Broadcaster {
         List<Listener> list = listenerMap.get(entity);
         if (list == null)
             return;
-
+        
+        logger.debug("Broadcast metadata change: entity=" + entity + ", event=" + event + ", cacheKey=" + cacheKey + ", listeners=" + list);
+        
+        // prevents concurrent modification exception
+        list = Lists.newArrayList(list);
         switch (entity) {
         case SYNC_ALL:
             for (Listener l : list) {
@@ -198,6 +203,8 @@ public class Broadcaster {
             }
             break;
         }
+        
+        logger.debug("Broadcast metadata change done");
     }
 
     /**
