@@ -193,6 +193,7 @@ public class Broadcaster {
             }
             break;
         case SYNC_PRJ_DATA:
+            ProjectManager.getInstance(config).clearL2Cache(); // cube's first becoming ready leads to schema change too
             for (Listener l : list) {
                 l.onProjectDataChange(this, cacheKey);
             }
