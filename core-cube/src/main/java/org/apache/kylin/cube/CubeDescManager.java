@@ -172,6 +172,8 @@ public class CubeDescManager {
     private CubeDesc loadCubeDesc(String path, boolean allowBroken) throws IOException {
         ResourceStore store = getStore();
         CubeDesc ndesc = store.getResource(path, CubeDesc.class, CUBE_DESC_SERIALIZER);
+        if (ndesc == null)
+            throw new IllegalArgumentException("No cube desc found at " + path);
 
         try {
             ndesc.init(config, getMetadataManager().getAllTablesMap());
