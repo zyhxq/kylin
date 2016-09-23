@@ -111,7 +111,7 @@ public class Broadcaster {
                 while (true) {
                     try {
                         final BroadcastEvent broadcastEvent = broadcastEvents.takeFirst();
-                        logger.info("new broadcast event:" + broadcastEvent);
+                        logger.info("Announcing new broadcast event:" + broadcastEvent);
                         for (final RestClient restClient : restClients) {
                             wipingCachePool.execute(new Runnable() {
                                 @Override
@@ -138,7 +138,6 @@ public class Broadcaster {
         if (all != null && all.contains(listener)) {
             return;
         }
-        logger.debug("registering no. " + (all == null ? 0 : all.size()) + " listener " + listener);
 
         for (String entity : entities) {
             if (!StringUtils.isBlank(entity))
@@ -175,7 +174,7 @@ public class Broadcaster {
         if (list == null)
             return;
         
-        logger.debug("Broadcast metadata change: entity=" + entity + ", event=" + event + ", cacheKey=" + cacheKey + ", listeners=" + list);
+        logger.debug("Broadcasting metadata change: entity=" + entity + ", event=" + event + ", cacheKey=" + cacheKey + ", listeners=" + list);
         
         // prevents concurrent modification exception
         list = Lists.newArrayList(list);
@@ -205,7 +204,7 @@ public class Broadcaster {
             break;
         }
         
-        logger.debug("Broadcast metadata change done");
+        logger.debug("Done broadcasting metadata change: entity=" + entity + ", event=" + event + ", cacheKey=" + cacheKey);
     }
 
     /**
