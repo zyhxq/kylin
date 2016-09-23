@@ -170,7 +170,7 @@ public class Broadcaster {
         notifyListener(SYNC_PRJ_DATA, Event.UPDATE, project);
     }
 
-    public void notifyListener(String entity, Event event, String cacheKey) throws IOException {
+    public synchronized void notifyListener(String entity, Event event, String cacheKey) throws IOException {
         List<Listener> list = listenerMap.get(entity);
         if (list == null)
             return;
