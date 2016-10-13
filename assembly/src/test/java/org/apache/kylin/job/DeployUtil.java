@@ -18,7 +18,12 @@
 
 package org.apache.kylin.job;
 
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.util.List;
 
@@ -38,8 +43,9 @@ import org.apache.kylin.metadata.MetadataManager;
 import org.apache.kylin.metadata.model.ColumnDesc;
 import org.apache.kylin.metadata.model.TableDesc;
 import org.apache.kylin.metadata.model.TblColRef;
-import org.apache.kylin.source.hive.HiveClient;
+import org.apache.kylin.source.hive.HiveClientFactory;
 import org.apache.kylin.source.hive.HiveCmdBuilder;
+import org.apache.kylin.source.hive.IHiveClient;
 import org.apache.kylin.source.kafka.TimedJsonStreamParser;
 import org.apache.maven.model.Model;
 import org.apache.maven.model.io.xpp3.MavenXpp3Reader;
@@ -47,9 +53,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.Lists;
-
-import kafka.message.Message;
-import kafka.message.MessageAndOffset;
 
 public class DeployUtil {
     private static final Logger logger = LoggerFactory.getLogger(DeployUtil.class);
@@ -179,7 +182,6 @@ public class DeployUtil {
         in.close();
     }
 
-
     private static void deployHiveTables() throws Exception {
 
         MetadataManager metaMgr = MetadataManager.getInstance(config());
@@ -205,7 +207,7 @@ public class DeployUtil {
         String tableFileDir = temp.getParent();
         temp.delete();
 
-        HiveClient hiveClient = new HiveClient();
+        IHiveClient hiveClient = HiveClientFactory.getHiveClient();
         // create hive tables
         hiveClient.executeHQL("CREATE DATABASE IF NOT EXISTS EDW");
         hiveClient.executeHQL(generateCreateTableHql(metaMgr.getTableDesc(TABLE_CAL_DT.toUpperCase())));
