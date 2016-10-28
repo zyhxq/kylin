@@ -365,6 +365,10 @@ abstract public class KylinConfigBase implements Serializable {
     public String getCliWorkingDir() {
         return getOptional("kylin.job.remote.cli.working.dir");
     }
+    
+    public String getExternalHiveRootDirectory() {
+        return getOptional("kylin.external.hive.root.directory", null);
+    }
 
     public boolean isEmptySegmentAllowed() {
         return Boolean.parseBoolean(getOptional("kylin.job.allow.empty.segment", "true"));
@@ -717,6 +721,7 @@ abstract public class KylinConfigBase implements Serializable {
         Map<Integer, String> r = convertKeyToInteger(getPropertiesByPrefix("kylin.source.engine."));
         // ref constants in ISourceAware
         r.put(0, "org.apache.kylin.source.hive.HiveSource");
+        r.put(6, "org.apache.kylin.source.hive.external.ExternalHiveSource");
         return r;
     }
 

@@ -23,6 +23,7 @@ package org.apache.kylin.rest.request;
 public class UpdateProjectRequest {
     private String formerProjectName;
     private String newProjectName;
+    private String newHiveName;
     private String newDescription;
 
     public UpdateProjectRequest() {
@@ -52,4 +53,16 @@ public class UpdateProjectRequest {
     public void setNewProjectName(String newProjectName) {
         this.newProjectName = newProjectName;
     }
+
+    public String getNewHiveName() {
+        if(this.newHiveName == null || this.newHiveName.trim().isEmpty()) {
+            return null;
+        }
+        return this.newHiveName.trim();
+    }
+
+    public void setNewHiveName(String newHiveName) {
+        this.newHiveName = newHiveName;
+    }
+    
 }

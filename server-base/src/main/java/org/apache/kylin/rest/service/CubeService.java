@@ -475,6 +475,10 @@ public class CubeService extends BasicService {
             logger.error("Cannot find table descirptor " + tableName, e);
             throw e;
         }
+        if(table.getHive() != null) {
+            logger.warn("Can not calculate cardinality for table {} which is loaded from external hive source !", tableName);
+            return;
+        }
 
         DefaultChainedExecutable job = new DefaultChainedExecutable();
         job.setName("Hive Column Cardinality calculation for table '" + tableName + "'");
@@ -482,7 +486,7 @@ public class CubeService extends BasicService {
 
         String outPath = HiveColumnCardinalityJob.OUTPUT_PATH + "/" + tableName;
         String param = "-table " + tableName + " -output " + outPath;
-
+        
         MapReduceExecutable step1 = new MapReduceExecutable();
 
         step1.setMapReduceJobClass(HiveColumnCardinalityJob.class);
@@ -561,8 +565,8 @@ public class CubeService extends BasicService {
     }
 
     @PreAuthorize(Constant.ACCESS_HAS_ROLE_MODELER + " or " + Constant.ACCESS_HAS_ROLE_ADMIN)
-    public String[] reloadHiveTable(String tables) throws IOException {
-        Set<String> loaded = HiveSourceTableLoader.reloadHiveTables(tables.split(","), getConfig());
+    public String[] reloadHiveTable(String tables, String project) throws IOException {
+        Set<String> loaded = HiveSourceTableLoader.reloadHiveTables(tables.split(","), project, getConfig());
         return (String[]) loaded.toArray(new String[loaded.size()]);
     }
 

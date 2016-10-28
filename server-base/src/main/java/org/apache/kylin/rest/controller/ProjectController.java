@@ -33,6 +33,7 @@ import org.apache.kylin.rest.request.UpdateProjectRequest;
 import org.apache.kylin.rest.service.AccessService;
 import org.apache.kylin.rest.service.CubeService;
 import org.apache.kylin.rest.service.ProjectService;
+import org.apache.kylin.source.hive.external.HiveManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -199,7 +200,9 @@ public class ProjectController extends BasicController {
         if (StringUtils.isEmpty(projectRequest.getName())) {
             throw new InternalErrorException("A project name must be given to create a project");
         }
-
+        
+        String hiveName = projectRequest.getHive();
+        checkHiveIsValid(hiveName, null);
         ProjectInstance createdProj = null;
         try {
             createdProj = projectService.createProject(projectRequest);
@@ -217,7 +220,7 @@ public class ProjectController extends BasicController {
         if (StringUtils.isEmpty(projectRequest.getFormerProjectName())) {
             throw new InternalErrorException("A project name must be given to update a project");
         }
-
+        checkHiveIsValid(projectRequest.getNewHiveName(), projectRequest.getFormerProjectName());
         ProjectInstance updatedProj = null;
         try {
             ProjectInstance currentProject = projectService.getProjectManager().getProject(projectRequest.getFormerProjectName());
@@ -253,5 +256,33 @@ public class ProjectController extends BasicController {
 
     public void setCubeService(CubeService cubeService) {
         this.cubeService = cubeService;
+    }
+    
+    /**
+     * Check input hive name is valid
+     * @param hiveName
+     */
+    private void checkHiveIsValid(String hiveName, String projectName) {
+        try {
+            if(HiveManager.getInstance().isSupportExternalHives()) {
+                HiveManager.getInstance().getHiveCommand(hiveName);
+                HiveManager.getInstance().getHiveConfigFile(hiveName);
+            } else if(hiveName != null) {
+                throw new InternalErrorException(HiveManager.NOT_SUPPORT_ERROR_MESSAGE);
+            }
+        } catch (IllegalArgumentException e) {
+            logger.error("Can not find hive " + hiveName + ", support hives : " + 
+                    HiveManager.getInstance().getExternalHiveName(), e);
+            throw new InternalErrorException("Can not find hive " + hiveName + " by current external hives configuration");
+        }
+        
+        if(projectName == null)
+            return ;
+        ProjectInstance project = projectService.getProjectManager().getProject(projectName);
+        if(project != null && !project.getRealizationEntries().isEmpty() && project.getHive() != hiveName) {
+            logger.warn("Update project {} from hive {} to {} may cause error, you can create a new project instead.", 
+                    projectName, project.getHive(), hiveName);
+            throw new InternalErrorException("It is not allow to modify hive name when cube exists in project.");
+        }
     }
 }
