@@ -27,7 +27,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import com.google.common.base.Strings;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.kylin.common.persistence.ResourceStore;
@@ -36,6 +35,7 @@ import org.apache.kylin.common.util.Dictionary;
 import org.apache.kylin.dict.StringBytesConverter;
 import org.apache.kylin.dict.TrieDictionary;
 import org.apache.kylin.dict.TrieDictionaryBuilder;
+import org.apache.kylin.dict.TrieDictionaryForestBuilder;
 import org.apache.kylin.metadata.model.ColumnDesc;
 import org.apache.kylin.metadata.model.TableDesc;
 import org.apache.kylin.source.ReadableTable;
@@ -43,6 +43,7 @@ import org.apache.kylin.source.ReadableTable;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.base.Strings;
 
 /**
  * @author yangli9
@@ -76,7 +77,7 @@ public class SnapshotTable extends RootPersistentEntity implements ReadableTable
 
         int maxIndex = tableDesc.getMaxColumnIndex();
 
-        TrieDictionaryBuilder<String> b = new TrieDictionaryBuilder<String>(new StringBytesConverter());
+        TrieDictionaryForestBuilder<String> b = new TrieDictionaryForestBuilder<String>(new StringBytesConverter());
 
         TableReader reader = table.getReader();
         try {
@@ -95,7 +96,7 @@ public class SnapshotTable extends RootPersistentEntity implements ReadableTable
             IOUtils.closeQuietly(reader);
         }
 
-        this.dict = b.build(0);
+        this.dict = b.build();
 
         ArrayList<int[]> allRowIndices = new ArrayList<int[]>();
         reader = table.getReader();
@@ -253,7 +254,7 @@ public class SnapshotTable extends RootPersistentEntity implements ReadableTable
                 }
             } else {
                 List<String[]> rows = new ArrayList<String[]>(rowNum);
-                TrieDictionaryBuilder<String> b = new TrieDictionaryBuilder<String>(new StringBytesConverter());
+                TrieDictionaryForestBuilder<String> b = new TrieDictionaryForestBuilder<String>(new StringBytesConverter());
 
                 for (int i = 0; i < rowNum; i++) {
                     String[] row = new String[n];
@@ -267,7 +268,7 @@ public class SnapshotTable extends RootPersistentEntity implements ReadableTable
                         b.addValue(row[j]);
                     }
                 }
-                this.dict = b.build(0);
+                this.dict = b.build();
                 for (String[] row : rows) {
                     int[] rowIndex = new int[n];
                     for (int i = 0; i < n; i++) {

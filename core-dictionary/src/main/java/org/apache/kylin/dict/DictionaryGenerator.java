@@ -137,7 +137,7 @@ public class DictionaryGenerator {
     private static class StringDictBuilder implements IDictionaryBuilder {
         @Override
         public Dictionary<String> build(DictionaryInfo dictInfo, IDictionaryValueEnumerator valueEnumerator, int baseId, int nSamples, ArrayList<String> returnSamples) throws IOException {
-            TrieDictionaryBuilder builder = new TrieDictionaryBuilder(new StringBytesConverter());
+            TrieDictionaryForestBuilder builder = new TrieDictionaryForestBuilder(new StringBytesConverter(), baseId);
             byte[] value;
             while (valueEnumerator.moveNext()) {
                 value = valueEnumerator.current();
@@ -148,7 +148,7 @@ public class DictionaryGenerator {
                 if (returnSamples.size() < nSamples && returnSamples.contains(v) == false)
                     returnSamples.add(v);
             }
-            return builder.build(baseId);
+            return builder.build();
         }
     }
 

@@ -49,6 +49,10 @@ public class TrieDictionaryForestBuilder<T> {
 
     private int curOffset;
 
+    public TrieDictionaryForestBuilder(BytesConverter<T> bytesConverter) {
+        this(bytesConverter, 0);
+    }
+    
     public TrieDictionaryForestBuilder(BytesConverter<T> bytesConverter, int baseId) {
         this.bytesConverter = bytesConverter;
         this.trieBuilder = new TrieDictionaryBuilder<T>(bytesConverter);
