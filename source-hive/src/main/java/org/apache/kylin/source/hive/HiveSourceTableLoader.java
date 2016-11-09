@@ -60,7 +60,7 @@ public class HiveSourceTableLoader {
             db2tables.put(parts[0], parts[1]);
         }
 
-        IHiveClient hiveClient = HiveClientFactory.getHiveClient();
+        IHiveClient hiveClient = HiveClientFactory.getHiveClientByConfig(config);
         SchemaChecker checker = new SchemaChecker(hiveClient, MetadataManager.getInstance(config), CubeManager.getInstance(config));
         for (Map.Entry<String, String> entry : db2tables.entries()) {
             SchemaChecker.CheckResult result = checker.allowReload(entry.getKey(), entry.getValue());

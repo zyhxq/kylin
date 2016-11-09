@@ -40,7 +40,7 @@ public class CreateFlatHiveTableStep extends AbstractExecutable {
     private final BufferedLogger stepLogger = new BufferedLogger(logger);
 
     private void createFlatHiveTable(KylinConfig config) throws IOException {
-        final HiveCmdBuilder hiveCmdBuilder = new HiveCmdBuilder();
+        final HiveCmdBuilder hiveCmdBuilder = new HiveCmdBuilder(config);
         hiveCmdBuilder.addStatement(getInitStatement());
         hiveCmdBuilder.addStatement(getCreateTableStatement());
         final String cmd = hiveCmdBuilder.toString();

@@ -19,6 +19,7 @@
 package org.apache.kylin.metadata.project;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
@@ -26,6 +27,8 @@ import java.util.TreeSet;
 import javax.annotation.Nullable;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.kylin.common.KylinConfig;
+import org.apache.kylin.common.KylinConfigExt;
 import org.apache.kylin.common.persistence.ResourceStore;
 import org.apache.kylin.common.persistence.RootPersistentEntity;
 import org.apache.kylin.metadata.realization.RealizationType;
@@ -77,6 +80,11 @@ public class ProjectInstance extends RootPersistentEntity {
 
     @JsonProperty("ext_filters")
     private Set<String> extFilters = new TreeSet<String>();
+
+    @JsonProperty("override_kylin_properties")
+    private LinkedHashMap<String, String> overrideKylinProps = new LinkedHashMap<>();
+
+    private KylinConfigExt config;
 
     public String getResourcePath() {
         return concatResourcePath(name);
@@ -285,19 +293,30 @@ public class ProjectInstance extends RootPersistentEntity {
         }
     }
 
+    public KylinConfig getConfig() {
+        return config;
+    }
+
+    private void setConfig(KylinConfigExt config) {
+        this.config = config;
+    }
+
+
     public void init() {
         if (name == null)
             name = ProjectInstance.DEFAULT_PROJECT_NAME;
 
         if (realizationEntries == null) {
-            realizationEntries = new ArrayList<RealizationEntry>();
+            realizationEntries = new ArrayList<>();
         }
 
         if (tables == null)
-            tables = new TreeSet<String>();
+            tables = new TreeSet<>();
 
         if (StringUtils.isBlank(this.name))
             throw new IllegalStateException("Project name must not be blank");
+
+        this.config = KylinConfigExt.createInstance(config, overrideKylinProps);
     }
 
     @Override

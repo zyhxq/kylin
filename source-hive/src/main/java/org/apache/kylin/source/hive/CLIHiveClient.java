@@ -19,9 +19,12 @@
 package org.apache.kylin.source.hive;
 
 import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.hive.cli.CliSessionState;
 import org.apache.hadoop.hive.common.StatsSetupConst;
 import org.apache.hadoop.hive.conf.HiveConf;
@@ -33,6 +36,7 @@ import org.apache.hadoop.hive.ql.CommandNeedRetryException;
 import org.apache.hadoop.hive.ql.Driver;
 import org.apache.hadoop.hive.ql.processors.CommandProcessorResponse;
 import org.apache.hadoop.hive.ql.session.SessionState;
+import org.apache.kylin.common.KylinConfig;
 
 import com.google.common.collect.Lists;
 
@@ -46,9 +50,40 @@ public class CLIHiveClient implements IHiveClient {
     protected HiveConf hiveConf = null;
     protected Driver driver = null;
     protected HiveMetaStoreClient metaStoreClient = null;
+    private final static String LOCAL_FS_SCHEMA = "file://";
+    public static final String HIVE_CONFIG_FILE_LOCATION = "conf/hive-site.xml";
+    public static final String HIVE_COMMAND_LOCATION = "bin/hive";
 
     public CLIHiveClient() {
         hiveConf = new HiveConf(CLIHiveClient.class);
+    }
+
+    public CLIHiveClient(KylinConfig kylinConfig) {
+
+        String hiveHome = kylinConfig.getHiveHome();
+        if (StringUtils.isNotEmpty(hiveHome)) {
+            if (hiveHome.endsWith("/") == false) {
+                hiveHome = hiveHome + "/";
+            }
+            String configFileLocation = hiveHome + HIVE_CONFIG_FILE_LOCATION;
+            URL uri = null;
+            try {
+                uri = new URL(LOCAL_FS_SCHEMA + configFileLocation);
+            } catch (MalformedURLException e) {
+                throw new IllegalArgumentException("Can not find hive config file " + configFileLocation);
+            }
+            /**
+              * In HiveConf, hiveSiteURL is a static variable, so we should use a global lock.
+              * If uri is null, HiveConf will use the file from java classpath.
+              */
+            synchronized (CLIHiveClient.class) {
+                hiveConf.setHiveSiteLocation(uri);
+                hiveConf = new HiveConf(CLIHiveClient.class);
+            }
+
+        } else {
+            hiveConf = new HiveConf(CLIHiveClient.class);
+        }
     }
 
     /**

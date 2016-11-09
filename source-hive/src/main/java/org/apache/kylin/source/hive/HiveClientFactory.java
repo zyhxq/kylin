@@ -21,13 +21,19 @@ package org.apache.kylin.source.hive;
 import org.apache.kylin.common.KylinConfig;
 
 public class HiveClientFactory {
-    public static IHiveClient getHiveClient() {
-        if ("cli".equals(KylinConfig.getInstanceFromEnv().getHiveClientMode())) {
-            return new CLIHiveClient();
+
+    public static IHiveClient getHiveClientByConfig(KylinConfig kylinConfig) {
+        if ("cli".equals(kylinConfig.getHiveClientMode())) {
+            return new CLIHiveClient(kylinConfig);
         } else if ("beeline".equals(KylinConfig.getInstanceFromEnv().getHiveClientMode())) {
-            return new BeelineHiveClient(KylinConfig.getInstanceFromEnv().getHiveBeelineParams());
+            return new BeelineHiveClient(kylinConfig.getHiveBeelineParams());
         } else {
             throw new RuntimeException("cannot recognize hive client mode");
         }
+    }
+
+    public static IHiveClient getHiveClient() {
+        return getHiveClientByConfig(KylinConfig.getInstanceFromEnv());
+
     }
 }

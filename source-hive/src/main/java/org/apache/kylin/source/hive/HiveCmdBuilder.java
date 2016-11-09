@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang.StringUtils;
 import org.apache.kylin.common.KylinConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,7 +45,11 @@ public class HiveCmdBuilder {
     final private ArrayList<String> statements = Lists.newArrayList();
 
     public HiveCmdBuilder() {
-        kylinConfig = KylinConfig.getInstanceFromEnv();
+        this(KylinConfig.getInstanceFromEnv());
+    }
+
+    public HiveCmdBuilder(KylinConfig kylinConfig) {
+        this.kylinConfig = kylinConfig;
         clientMode = HiveClientMode.valueOf(kylinConfig.getHiveClientMode().toUpperCase());
     }
 
@@ -53,7 +58,15 @@ public class HiveCmdBuilder {
 
         switch (clientMode) {
         case CLI:
-            buf.append("hive -e \"");
+            String hiveHome = kylinConfig.getHiveHome();
+            if (StringUtils.isNotEmpty(hiveHome)) {
+                if (hiveHome.endsWith("/") == false) {
+                    hiveHome = hiveHome + "/";
+                }
+                buf.append(hiveHome).append(CLIHiveClient.HIVE_COMMAND_LOCATION).append(" -e \"");
+            } else {
+                buf.append("hive -e \"");
+            }
             for (String statement : statements) {
                 buf.append(statement).append("\n");
             }

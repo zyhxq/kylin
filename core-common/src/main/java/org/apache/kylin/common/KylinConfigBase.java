@@ -830,4 +830,12 @@ abstract public class KylinConfigBase implements Serializable {
     public void setMaxBuildingSegments(int maxBuildingSegments) {
         setProperty("kylin.cube.building.segment.max", String.valueOf(maxBuildingSegments));
     }
+
+    public String getHiveHome() {
+        return getOptional("kylin.hive.home", "");
+    }
+
+    public void setHiveHome(String hiveHome) {
+        setProperty("kylin.hive.home", hiveHome);
+    }
 }

@@ -66,6 +66,102 @@ class HiveTableMeta {
         this.partitionColumns = partitionColumns;
     }
 
+    public String getTableName() {
+        return tableName;
+    }
+
+    public void setTableName(String tableName) {
+        this.tableName = tableName;
+    }
+
+    public String getSdLocation() {
+        return sdLocation;
+    }
+
+    public void setSdLocation(String sdLocation) {
+        this.sdLocation = sdLocation;
+    }
+
+    public String getSdInputFormat() {
+        return sdInputFormat;
+    }
+
+    public void setSdInputFormat(String sdInputFormat) {
+        this.sdInputFormat = sdInputFormat;
+    }
+
+    public String getSdOutputFormat() {
+        return sdOutputFormat;
+    }
+
+    public void setSdOutputFormat(String sdOutputFormat) {
+        this.sdOutputFormat = sdOutputFormat;
+    }
+
+    public String getOwner() {
+        return owner;
+    }
+
+    public void setOwner(String owner) {
+        this.owner = owner;
+    }
+
+    public String getTableType() {
+        return tableType;
+    }
+
+    public void setTableType(String tableType) {
+        this.tableType = tableType;
+    }
+
+    public int getLastAccessTime() {
+        return lastAccessTime;
+    }
+
+    public void setLastAccessTime(int lastAccessTime) {
+        this.lastAccessTime = lastAccessTime;
+    }
+
+    public long getFileSize() {
+        return fileSize;
+    }
+
+    public void setFileSize(long fileSize) {
+        this.fileSize = fileSize;
+    }
+
+    public long getFileNum() {
+        return fileNum;
+    }
+
+    public void setFileNum(long fileNum) {
+        this.fileNum = fileNum;
+    }
+
+    public boolean isNative() {
+        return isNative;
+    }
+
+    public void setNative(boolean aNative) {
+        isNative = aNative;
+    }
+
+    public List<HiveTableColumnMeta> getAllColumns() {
+        return allColumns;
+    }
+
+    public void setAllColumns(List<HiveTableColumnMeta> allColumns) {
+        this.allColumns = allColumns;
+    }
+
+    public List<HiveTableColumnMeta> getPartitionColumns() {
+        return partitionColumns;
+    }
+
+    public void setPartitionColumns(List<HiveTableColumnMeta> partitionColumns) {
+        this.partitionColumns = partitionColumns;
+    }
+
     @Override
     public String toString() {
         return "HiveTableMeta{" + "tableName='" + tableName + '\'' + ", sdLocation='" + sdLocation + '\'' + ", sdInputFormat='" + sdInputFormat + '\'' + ", sdOutputFormat='" + sdOutputFormat + '\'' + ", owner='" + owner + '\'' + ", tableType='" + tableType + '\'' + ", lastAccessTime=" + lastAccessTime + ", fileSize=" + fileSize + ", fileNum=" + fileNum + ", isNative=" + isNative + ", allColumns=" + allColumns + ", partitionColumns=" + partitionColumns + '}';

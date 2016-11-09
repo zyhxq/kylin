@@ -59,6 +59,8 @@ import com.google.common.collect.Sets;
 
 public class HiveMRInput implements IMRInput {
 
+    private static final Logger logger = LoggerFactory.getLogger(HiveMRInput.class);
+
     @Override
     public IMRBatchCubingInputSide getBatchCubingInputSide(IJoinedFlatTableDesc flatDesc) {
         return new BatchCubingInputSide(flatDesc);
@@ -133,10 +135,41 @@ public class HiveMRInput implements IMRInput {
             if (kylinConfig.isHiveRedistributeEnabled() == true) {
                 jobFlow.addTask(createRedistributeFlatHiveTableStep(conf, flatDesc, jobFlow.getId(), cubeName));
             }
+
             AbstractExecutable task = createLookupHiveViewMaterializationStep(jobFlow.getId());
             if (task != null) {
                 jobFlow.addTask(task);
             }
+
+            if (StringUtils.isNotEmpty(kylinConfig.getHiveHome()) == true) {
+                // copy from another hive cluster to current cluster
+                task = createCopyHiveDataStep(kylinConfig, flatDesc, jobFlow.getId());
+                if (task != null) {
+                    jobFlow.addTask(task);
+                }
+            }
+        }
+
+        protected AbstractExecutable createCopyHiveDataStep(KylinConfig kylinConfig, IJoinedFlatTableDesc flatDesc, String jobId) {
+            IHiveClient hiveClient = HiveClientFactory.getHiveClientByConfig(kylinConfig);
+            String input = "";
+            try {
+                input = hiveClient.getHiveTableMeta(kylinConfig.getHiveDatabaseForIntermediateTable(), flatDesc.getTableName()).getSdLocation();
+            } catch (Exception e) {
+                logger.error("Error when get intermediate table location", e);
+                throw new IllegalArgumentException(e);
+            }
+
+            if(input.startsWith("/") || input.startsWith(HadoopUtil.getCurrentConfiguration().get(FileSystem.FS_DEFAULT_NAME_KEY))) {
+                // in the same cluster
+                return null;
+            }
+            String output = JoinedFlatTable.getTableDir(flatDesc, JobBuilderSupport.getJobWorkingDir(conf, jobId));
+            String cmd = String.format("hadoop distcp -overwrite %s %s", input, output);
+            ShellExecutable task = new ShellExecutable();
+            task.setName("Copy Intermediate Table To Local DFS");
+            task.setCmd(cmd);
+            return task;
         }
 
         public static AbstractExecutable createRedistributeFlatHiveTableStep(JobEngineConfig conf, IJoinedFlatTableDesc flatTableDesc, String jobId, String cubeName) {
@@ -158,9 +191,9 @@ public class HiveMRInput implements IMRInput {
         public ShellExecutable createLookupHiveViewMaterializationStep(String jobId) {
             ShellExecutable step = new ShellExecutable();
             step.setName(ExecutableConstants.STEP_NAME_MATERIALIZE_HIVE_VIEW_IN_LOOKUP);
-            HiveCmdBuilder hiveCmdBuilder = new HiveCmdBuilder();
-
             KylinConfig kylinConfig = ((CubeSegment) flatDesc.getSegment()).getConfig();
+            HiveCmdBuilder hiveCmdBuilder = new HiveCmdBuilder(kylinConfig);
+
             MetadataManager metadataManager = MetadataManager.getInstance(kylinConfig);
             final Set<TableDesc> lookupViewsTables = Sets.newHashSet();
 
@@ -237,13 +270,13 @@ public class HiveMRInput implements IMRInput {
     public static class RedistributeFlatHiveTableStep extends AbstractExecutable {
         private final BufferedLogger stepLogger = new BufferedLogger(logger);
 
-        private long computeRowCount(String database, String table) throws Exception {
-            IHiveClient hiveClient = HiveClientFactory.getHiveClient();
+        private long computeRowCount(KylinConfig config, String database, String table) throws Exception {
+            IHiveClient hiveClient = HiveClientFactory.getHiveClientByConfig(config);
             return hiveClient.getHiveTableRows(database, table);
         }
 
         private void redistributeTable(KylinConfig config, int numReducers) throws IOException {
-            final HiveCmdBuilder hiveCmdBuilder = new HiveCmdBuilder();
+            final HiveCmdBuilder hiveCmdBuilder = new HiveCmdBuilder(config);
             hiveCmdBuilder.addStatement(getInitStatement());
             hiveCmdBuilder.addStatement("set mapreduce.job.reduces=" + numReducers + ";\n");
             hiveCmdBuilder.addStatement("set hive.merge.mapredfiles=false;\n");
@@ -280,7 +313,7 @@ public class HiveMRInput implements IMRInput {
             }
 
             try {
-                long rowCount = computeRowCount(database, tableName);
+                long rowCount = computeRowCount(config, database, tableName);
                 logger.debug("Row count of table '" + intermediateTable + "' is " + rowCount);
                 if (rowCount == 0) {
                     if (!config.isEmptySegmentAllowed()) {
@@ -358,7 +391,7 @@ public class HiveMRInput implements IMRInput {
             StringBuffer output = new StringBuffer();
             final String hiveTable = this.getIntermediateTableIdentity();
             if (config.isHiveKeepFlatTable() == false && StringUtils.isNotEmpty(hiveTable)) {
-                final HiveCmdBuilder hiveCmdBuilder = new HiveCmdBuilder();
+                final HiveCmdBuilder hiveCmdBuilder = new HiveCmdBuilder(config);
                 hiveCmdBuilder.addStatement("USE " + config.getHiveDatabaseForIntermediateTable() + ";");
                 hiveCmdBuilder.addStatement("DROP TABLE IF EXISTS  " + hiveTable + ";");
 
