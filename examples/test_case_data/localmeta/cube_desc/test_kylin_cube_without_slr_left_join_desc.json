@@ -116,12 +116,12 @@
     },
     "dependent_measure_ref" : null
   }, {
-    "name" : "SITE_NAME_BITMAP",
+    "name" : "PRICE_BITMAP",
     "function" : {
       "expression" : "COUNT_DISTINCT",
       "parameter" : {
         "type" : "column",
-        "value" : "SITE_NAME",
+        "value" : "PRICE",
         "next_parameter" : null
       },
       "returntype" : "bitmap"
@@ -211,7 +211,7 @@
   } ],
   "dictionaries" : [
     {
-      "column" : "SITE_NAME",
+      "column" : "PRICE",
       "builder": "org.apache.kylin.dict.GlobalDictionaryBuilder"
     }
   ],
@@ -257,7 +257,7 @@
       "name" : "f2",
       "columns" : [ {
         "qualifier" : "m",
-        "measure_refs" : [ "seller_cnt_bitmap", "site_name_bitmap", "seller_format_cnt"]
+        "measure_refs" : [ "seller_cnt_bitmap", "price_bitmap", "seller_format_cnt"]
       } ]
     }, {
       "name" : "f3",

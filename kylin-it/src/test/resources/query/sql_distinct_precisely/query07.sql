@@ -19,6 +19,6 @@
 select lstg_format_name,
  sum(price) as GMV,
  count(1) as TRANS_CNT,
- count(distinct seller_id) as seller_count
+ count(distinct price) as price_count
  from test_kylin_fact
  group by lstg_format_name

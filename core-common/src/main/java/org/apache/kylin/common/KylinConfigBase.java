@@ -811,6 +811,15 @@ abstract public class KylinConfigBase implements Serializable {
         setProperty("kylin.dict.append.cache.size", String.valueOf(cacheSize));
     }
 
+    public int getAppendDictMaxVersions() {
+        return Integer.parseInt(getOptional("kylin.dict.append.max.versions", "3"));
+    }
+
+    public int getAppendDictVersionTTL() {
+        return Integer.parseInt(getOptional("kylin.dict.append.version.ttl", "259200000"));
+    }
+
+    @Deprecated
     public String getCreateFlatHiveTableMethod() {
         return getOptional("kylin.hive.create.flat.table.method", "1");
     }
