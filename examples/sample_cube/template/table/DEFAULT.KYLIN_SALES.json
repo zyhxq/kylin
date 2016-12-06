@@ -40,15 +40,11 @@
     "datatype" : "bigint"
   }, {
     "id" : "10",
-    "name" : "BUYER_ID",
-    "datatype" : "bigint"
-  }, {
-    "id" : "11",
-    "name" : "OPS_USER_ID",
+    "name" : "USER_ID",
     "datatype" : "string"
   }, {
-    "id" : "12",
-    "name" : "OPS_REGION",
+    "id" : "11",
+    "name" : "REGION",
     "datatype" : "string"
   } ],
   "database" : "DEFAULT",

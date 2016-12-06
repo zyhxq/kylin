@@ -6,32 +6,27 @@
   "description" : null,
   "null_string" : null,
   "dimensions" : [ {
-    "name" : "TRANS_ID",
-    "table" : "DEFAULT.KYLIN_SALES",
-    "column" : "TRANS_ID",
-    "derived" : null
-  }, {
     "name" : "CAL_DT",
     "table" : "DEFAULT.KYLIN_CAL_DT",
     "column" : "{FK}",
-    "derived" : [ "WEEK_BEG_DT", "MONTH_BEG_DT", "YEAR_BEG_DT" ]
+    "derived" : [ "WEEK_BEG_DT" ]
   }, {
     "name" : "CATEGORY",
     "table" : "DEFAULT.KYLIN_CATEGORY_GROUPINGS",
     "column" : "{FK}",
     "derived" : [ "USER_DEFINED_FIELD1", "USER_DEFINED_FIELD3" ]
   }, {
-    "name" : "META_CATEG_NAME",
+    "name" : "CATEGORY_HIERARCHY",
     "table" : "DEFAULT.KYLIN_CATEGORY_GROUPINGS",
     "column" : "META_CATEG_NAME",
     "derived" : null
   }, {
-    "name" : "CATEG_LVL2_NAME",
+    "name" : "CATEGORY_HIERARCHY",
     "table" : "DEFAULT.KYLIN_CATEGORY_GROUPINGS",
     "column" : "CATEG_LVL2_NAME",
     "derived" : null
   }, {
-    "name" : "CATEG_LVL3_NAME",
+    "name" : "CATEGORY_HIERARCHY",
     "table" : "DEFAULT.KYLIN_CATEGORY_GROUPINGS",
     "column" : "CATEG_LVL3_NAME",
     "derived" : null
@@ -41,54 +36,14 @@
     "column" : "LSTG_FORMAT_NAME",
     "derived" : null
   }, {
-    "name" : "SELLER_ID",
+    "name" : "USER_ID",
     "table" : "DEFAULT.KYLIN_SALES",
-    "column" : "SELLER_ID",
+    "column" : "USER_ID",
     "derived" : null
   }, {
-    "name" : "BUYER_ID",
+    "name" : "REGION",
     "table" : "DEFAULT.KYLIN_SALES",
-    "column" : "BUYER_ID",
-    "derived" : null
-  }, {
-    "name" : "ACCOUNT_BUYER_LEVEL",
-    "table" : "BUYER_ACCOUNT",
-    "column" : "ACCOUNT_BUYER_LEVEL",
-    "derived" : null
-  }, {
-    "name" : "ACCOUNT_SELLER_LEVEL",
-    "table" : "SELLER_ACCOUNT",
-    "column" : "ACCOUNT_SELLER_LEVEL",
-    "derived" : null
-  }, {
-    "name" : "BUYER_COUNTRY",
-    "table" : "BUYER_ACCOUNT",
-    "column" : "ACCOUNT_COUNTRY",
-    "derived" : null
-  }, {
-    "name" : "SELLER_COUNTRY",
-    "table" : "SELLER_ACCOUNT",
-    "column" : "ACCOUNT_COUNTRY",
-    "derived" : null
-  }, {
-    "name" : "BUYER_COUNTRY_NAME",
-    "table" : "BUYER_COUNTRY",
-    "column" : "NAME",
-    "derived" : null
-  }, {
-    "name" : "SELLER_COUNTRY_NAME",
-    "table" : "SELLER_COUNTRY",
-    "column" : "NAME",
-    "derived" : null
-  }, {
-    "name" : "OPS_USER_ID",
-    "table" : "DEFAULT.KYLIN_SALES",
-    "column" : "OPS_USER_ID",
-    "derived" : null
-  }, {
-    "name" : "OPS_REGION",
-    "table" : "DEFAULT.KYLIN_SALES",
-    "column" : "OPS_REGION",
+    "column" : "REGION",
     "derived" : null
   } ],
   "measures" : [ {
@@ -101,7 +56,8 @@
         "next_parameter" : null
       },
       "returntype" : "decimal(19,4)"
-    }
+    },
+    "dependent_measure_ref" : null
   }, {
     "name" : "GMV_MIN",
     "function" : {
@@ -112,7 +68,8 @@
         "next_parameter" : null
       },
       "returntype" : "decimal(19,4)"
-    }
+    },
+    "dependent_measure_ref" : null
   }, {
     "name" : "GMV_MAX",
     "function" : {
@@ -123,7 +80,8 @@
         "next_parameter" : null
       },
       "returntype" : "decimal(19,4)"
-    }
+    },
+    "dependent_measure_ref" : null
   }, {
     "name" : "TRANS_CNT",
     "function" : {
@@ -134,7 +92,8 @@
         "next_parameter" : null
       },
       "returntype" : "bigint"
-    }
+    },
+    "dependent_measure_ref" : null
   }, {
     "name" : "SELLER_CNT_HLL",
     "function" : {
@@ -145,7 +104,20 @@
         "next_parameter" : null
       },
       "returntype" : "hllc(10)"
-    }
+    },
+    "dependent_measure_ref" : null
+  }, {
+    "name" : "SELLER_FORMAT_CNT",
+    "function" : {
+      "expression" : "COUNT_DISTINCT",
+      "parameter" : {
+        "type" : "column",
+        "value" : "LSTG_FORMAT_NAME",
+        "next_parameter" : null
+      },
+      "returntype" : "hllc(10)"
+    },
+    "dependent_measure_ref" : null
   }, {
     "name" : "TOP_SELLER",
     "function" : {
@@ -160,21 +132,13 @@
         }
       },
       "returntype" : "topn(100)"
-    }
+    },
+    "dependent_measure_ref" : null
   } ],
   "rowkey" : {
     "rowkey_columns" : [ {
-      "column" : "BUYER_ID",
-      "encoding" : "integer:4"
-    }, {
-      "column" : "SELLER_ID",
-      "encoding" : "integer:4"
-    }, {
-      "column" : "TRANS_ID",
-      "encoding" : "integer:4"
-    }, {
       "column" : "PART_DT",
-      "encoding" : "date"
+      "encoding" : "dict"
     }, {
       "column" : "LEAF_CATEG_ID",
       "encoding" : "dict"
@@ -188,34 +152,16 @@
       "column" : "CATEG_LVL3_NAME",
       "encoding" : "dict"
     }, {
-      "column" : "BUYER_ACCOUNT.ACCOUNT_BUYER_LEVEL",
-      "encoding" : "dict"
-    }, {
-      "column" : "SELLER_ACCOUNT.ACCOUNT_SELLER_LEVEL",
-      "encoding" : "dict"
-    }, {
-      "column" : "BUYER_ACCOUNT.ACCOUNT_COUNTRY",
-      "encoding" : "dict"
-    }, {
-      "column" : "SELLER_ACCOUNT.ACCOUNT_COUNTRY",
-      "encoding" : "dict"
-    }, {
-      "column" : "BUYER_COUNTRY.NAME",
-      "encoding" : "dict"
-    }, {
-      "column" : "SELLER_COUNTRY.NAME",
-      "encoding" : "dict"
-    }, {
       "column" : "LSTG_FORMAT_NAME",
+      "encoding" : "fixed_length:12"
+    }, {
+      "column" : "USER_ID",
+      "encoding" : "dict"
+    }, {
+      "column" : "REGION",
       "encoding" : "dict"
     }, {
       "column" : "LSTG_SITE_ID",
-      "encoding" : "dict"
-    }, {
-      "column" : "OPS_USER_ID",
-      "encoding" : "dict"
-    }, {
-      "column" : "OPS_REGION",
       "encoding" : "dict"
     } ]
   },
@@ -224,34 +170,21 @@
       "name" : "F1",
       "columns" : [ {
         "qualifier" : "M",
-        "measure_refs" : [ "GMV_SUM", "GMV_MIN", "GMV_MAX", "TRANS_CNT" ]
+        "measure_refs" : [ "GMV_SUM", "GMV_MIN", "GMV_MAX", "TRANS_CNT", "TOP_SELLER" ]
       } ]
     }, {
       "name" : "F2",
       "columns" : [ {
         "qualifier" : "M",
-        "measure_refs" : [ "SELLER_CNT_HLL", "TOP_SELLER" ]
+        "measure_refs" : [ "SELLER_CNT_HLL", "SELLER_FORMAT_CNT" ]
       } ]
     } ]
   },
   "aggregation_groups" : [ {
-    "includes" : [ "PART_DT", "META_CATEG_NAME", "CATEG_LVL2_NAME", "CATEG_LVL3_NAME", "LEAF_CATEG_ID", "LSTG_FORMAT_NAME", "LSTG_SITE_ID", "OPS_USER_ID", "OPS_REGION", 
-                   "BUYER_ACCOUNT.ACCOUNT_BUYER_LEVEL", "SELLER_ACCOUNT.ACCOUNT_SELLER_LEVEL", "BUYER_ACCOUNT.ACCOUNT_COUNTRY", "SELLER_ACCOUNT.ACCOUNT_COUNTRY", "BUYER_COUNTRY.NAME", "SELLER_COUNTRY.NAME" ],
+    "includes" : [ "CATEG_LVL2_NAME", "CATEG_LVL3_NAME", "LEAF_CATEG_ID", "LSTG_FORMAT_NAME", "LSTG_SITE_ID", "META_CATEG_NAME", "PART_DT" ],
     "select_rule" : {
-      "hierarchy_dims" : [ [ "META_CATEG_NAME", "CATEG_LVL2_NAME", "CATEG_LVL3_NAME", "LEAF_CATEG_ID" ] ],
-      "mandatory_dims" : [ "PART_DT" ],
-      "joint_dims" : [ [ "BUYER_ACCOUNT.ACCOUNT_COUNTRY", "BUYER_COUNTRY.NAME" ], [ "SELLER_ACCOUNT.ACCOUNT_COUNTRY", "SELLER_COUNTRY.NAME" ],
-                       [ "BUYER_ACCOUNT.ACCOUNT_BUYER_LEVEL", "SELLER_ACCOUNT.ACCOUNT_SELLER_LEVEL" ], [ "LSTG_FORMAT_NAME", "LSTG_SITE_ID" ], [ "OPS_USER_ID", "OPS_REGION" ] ]
-    }
-  }, {
-    "includes" : [ "TRANS_ID", "BUYER_ID", "SELLER_ID", 
-                   "PART_DT", "META_CATEG_NAME", "CATEG_LVL2_NAME", "CATEG_LVL3_NAME", "LEAF_CATEG_ID", "LSTG_FORMAT_NAME", "LSTG_SITE_ID", "OPS_USER_ID", "OPS_REGION", 
-                   "BUYER_ACCOUNT.ACCOUNT_BUYER_LEVEL", "SELLER_ACCOUNT.ACCOUNT_SELLER_LEVEL", "BUYER_ACCOUNT.ACCOUNT_COUNTRY", "SELLER_ACCOUNT.ACCOUNT_COUNTRY", "BUYER_COUNTRY.NAME", "SELLER_COUNTRY.NAME" ],
-    "select_rule" : {
-      "hierarchy_dims" : [ ],
-      "mandatory_dims" : [ "TRANS_ID", "BUYER_ID", "SELLER_ID", 
-                   "PART_DT", "META_CATEG_NAME", "CATEG_LVL2_NAME", "CATEG_LVL3_NAME", "LEAF_CATEG_ID", "LSTG_FORMAT_NAME", "LSTG_SITE_ID", "OPS_USER_ID", "OPS_REGION", 
-                   "BUYER_ACCOUNT.ACCOUNT_BUYER_LEVEL", "SELLER_ACCOUNT.ACCOUNT_SELLER_LEVEL", "BUYER_ACCOUNT.ACCOUNT_COUNTRY", "SELLER_ACCOUNT.ACCOUNT_COUNTRY", "BUYER_COUNTRY.NAME", "SELLER_COUNTRY.NAME" ],
+      "hierarchy_dims" : [ [ "META_CATEG_NAME", "CATEG_LVL2_NAME", "CATEG_LVL3_NAME" ] ],
+      "mandatory_dims" : [ ],
       "joint_dims" : [ ]
     }
   } ],
@@ -261,8 +194,6 @@
   "auto_merge_time_ranges" : null,
   "retention_range" : 0,
   "engine_type" : %default_engine_type%,
-  "storage_type" : %default_engine_type%,
-  "override_kylin_properties" : {
-    "kylin.cube.aggrgroup.is-mandatory-only-valid" : "true"
-  }
+  "storage_type" : %default_storage_type%,
+  "override_kylin_properties" : { }
 }
