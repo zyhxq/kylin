@@ -652,7 +652,7 @@ public class CubeController extends BasicController {
      * @param aggregationGroupStr
      * @return number of cuboid, -1 if failed
      */
-    @RequestMapping(value = "aggregationgroups/cuboid", method = RequestMethod.GET)
+    @RequestMapping(value = "aggregationgroups/cuboid", method = RequestMethod.POST)
     @ResponseBody
     public long calculateCuboidCombination(@RequestBody String aggregationGroupStr) {
         AggregationGroup aggregationGroup = deserializeAggregationGroup(aggregationGroupStr);
