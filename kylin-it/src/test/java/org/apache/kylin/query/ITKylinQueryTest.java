@@ -27,6 +27,7 @@ import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.kylin.common.KylinConfig;
+import org.apache.kylin.common.KylinVersion;
 import org.apache.kylin.common.debug.BackdoorToggles;
 import org.apache.kylin.gridtable.GTScanSelfTerminatedException;
 import org.apache.kylin.gridtable.StorageSideBehavior;
@@ -36,7 +37,9 @@ import org.apache.kylin.query.routing.rules.RemoveBlackoutRealizationsRule;
 import org.apache.kylin.storage.hbase.HBaseStorage;
 import org.dbunit.database.DatabaseConnection;
 import org.dbunit.database.IDatabaseConnection;
+import org.dbunit.dataset.ITable;
 import org.junit.AfterClass;
+import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Rule;
@@ -356,4 +359,27 @@ public class ITKylinQueryTest extends KylinTestBase {
         this.batchExecuteQuery(getQueryFolderPrefix() + "src/test/resources/query/sql_window");
     }
 
+    @Test
+    public void testVersionQuery() throws Exception {
+        String expectVersion = KylinVersion.getCurrentVersion().toString();
+        printInfo("---------- verify expect version: " + expectVersion);
+
+        String queryName = "QueryKylinVersion";
+        String sql = "SELECT VERSION() AS version";
+
+        // execute Kylin
+        printInfo("Query Result from Kylin - " + queryName);
+        IDatabaseConnection kylinConn = new DatabaseConnection(cubeConnection);
+        ITable kylinTable = executeQuery(kylinConn, queryName, sql, false);
+        String queriedVersion = String.valueOf(kylinTable.getValue(0, "version"));
+
+        // compare the result
+        Assert.assertEquals(expectVersion, queriedVersion);
+    }
+    
+    @Test
+    public void testSelectStarColumnCount() throws Exception {
+        execAndCompColumnCount("select * from test_kylin_fact limit 10", 9);
+        execAndCompColumnCount("select * from test_kylin_fact", 9);
+    }
 }
