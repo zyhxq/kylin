@@ -764,8 +764,8 @@ public class CubeStorageQuery implements IStorageQuery {
         boolean goodFilter = filter == null || (TupleFilter.isEvaluableRecursively(filter) && context.isCoprocessorEnabled());
         boolean goodSort = !context.hasSort();
         if (goodAggr && goodFilter && goodSort) {
-            logger.info("Enable limit " + context.getLimit());
             context.enableLimit();
+            logger.info("Enable limit " + context.getLimit());
         }
     }
 

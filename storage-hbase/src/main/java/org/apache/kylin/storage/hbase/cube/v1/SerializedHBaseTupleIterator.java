@@ -100,7 +100,7 @@ public class SerializedHBaseTupleIterator implements ITupleIterator {
             return true;
 
         // 1. check limit
-        if (context.isLimitEnabled() && scanCount >= context.getLimit() + context.getOffset()) {
+        if (context.isLimitEnabled() && (scanCount - context.getOffset() >= context.getLimit())) {
             return false;
         }
         // 2. check partial result
