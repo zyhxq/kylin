@@ -63,7 +63,7 @@ public class SQLDigest {
 
     public SQLDigest(String factTable, TupleFilter filter, List<JoinDesc> joinDescs, Set<TblColRef> allColumns, //
             List<TblColRef> groupbyColumns, Set<TblColRef> subqueryJoinParticipants, Set<TblColRef> filterColumns, Set<TblColRef> metricColumns, //
-            List<FunctionDesc> aggregations, List<SQLCall> aggrSqlCalls, List<TblColRef> sortColumns, List<OrderEnum> sortOrders,boolean limitPrecedesAggr) {
+            List<FunctionDesc> aggregations, List<SQLCall> aggrSqlCalls, List<TblColRef> sortColumns, List<OrderEnum> sortOrders, boolean limitPrecedesAggr) {
         this.factTable = factTable;
         this.filter = filter;
         this.joinDescs = joinDescs;
