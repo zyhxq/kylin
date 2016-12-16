@@ -91,10 +91,6 @@ public class OLAPLimitRel extends SingleRel implements OLAPRel {
             }
 
             context.afterLimit = true;
-
-            if (!this.context.afterAggregate) {
-                this.context.limitPrecedesAggr = true;
-            }
         }
     }
 
