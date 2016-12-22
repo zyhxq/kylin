@@ -67,7 +67,8 @@ public class StorageResponseGTScatter implements IGTScanner {
 
     @Override
     public void close() throws IOException {
-        //do nothing
+        //If upper consumer failed while consuming the GTRecords, the consumer should call IGTScanner's close method to ensure releasing resource
+        Iterators.
     }
 
     @Override
