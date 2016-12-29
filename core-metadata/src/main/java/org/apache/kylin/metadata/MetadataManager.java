@@ -395,6 +395,7 @@ public class MetadataManager {
         // remove old json
         if (name == null) {
             getStore().deleteResource(path);
+            return null;
         }
 
         srcTableExdMap.putLocal(name, t);
