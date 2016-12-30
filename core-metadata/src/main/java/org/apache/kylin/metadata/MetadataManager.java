@@ -39,6 +39,7 @@ import org.apache.kylin.metadata.model.DataModelDesc;
 import org.apache.kylin.metadata.model.ExternalFilterDesc;
 import org.apache.kylin.metadata.model.TableDesc;
 import org.apache.kylin.metadata.model.TableExtDesc;
+import org.apache.kylin.metadata.model.TableRef;
 import org.apache.kylin.metadata.project.ProjectInstance;
 import org.apache.kylin.metadata.project.ProjectManager;
 import org.slf4j.Logger;
@@ -496,19 +497,16 @@ public class MetadataManager {
     }
 
     public boolean isTableInModel(String tableName, String projectName) throws IOException {
-        for (DataModelDesc modelDesc : getModels(projectName)) {
-            if (modelDesc.getAllTables().contains(tableName.toUpperCase())) {
-                return true;
-            }
-        }
-        return false;
+        return getModelsUsingTable(tableName, projectName).size() > 0;
     }
 
     public List<String> getModelsUsingTable(String tableName, String projectName) throws IOException {
         List<String> models = new ArrayList<>();
         for (DataModelDesc modelDesc : getModels(projectName)) {
-            if (modelDesc.getAllTables().contains(tableName.toUpperCase())) {
-                models.add(modelDesc.getName());
+            for(TableRef tableRef : modelDesc.getAllTables()){
+                if(tableRef.getTableName().equalsIgnoreCase(tableName)){
+                    models.add(modelDesc.getName());
+                }
             }
         }
         return models;
@@ -516,8 +514,10 @@ public class MetadataManager {
 
     public boolean isTableInAnyModel(String tableName) {
         for (DataModelDesc modelDesc : getModels()) {
-            if (modelDesc.getAllTables().contains(tableName.toUpperCase())) {
-                return true;
+            for(TableRef tableRef : modelDesc.getAllTables()){
+                if(tableRef.getTableName().equalsIgnoreCase(tableName)){
+                    return true;
+                }
             }
         }
         return false;
