@@ -43,7 +43,7 @@ mkdir -p ${TARGET_PATH}
 KYLIN_PID=`cat "${TARGET_PATH}/*kylin*/pid"`
 if [ -n "${KYLIN_PID}" ]; then
     if ps -p ${KYLIN_PID} > /dev/null; then
-        echo "Kylin is running, will be killed. (pid=${KYILN_PID})"
+        echo "Kylin is running, will be killed. (pid=${KYLIN_PID})"
         kill -9 ${KYLIN_PID}
     fi
 fi
