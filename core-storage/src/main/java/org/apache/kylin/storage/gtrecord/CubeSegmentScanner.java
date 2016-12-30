@@ -50,12 +50,13 @@ public class CubeSegmentScanner implements IGTScanner {
     final Cuboid cuboid;
 
     final GTScanRequest scanRequest;
+    final boolean isEmpty;
 
     public CubeSegmentScanner(CubeSegment cubeSeg, Cuboid cuboid, Set<TblColRef> dimensions, Set<TblColRef> groups, //
             Collection<FunctionDesc> metrics, TupleFilter originalfilter, StorageContext context) {
-        
+
         logger.info("Init CubeSegmentScanner for segment {}", cubeSeg.getName());
-        
+
         this.cuboid = cuboid;
         this.cubeSeg = cubeSeg;
 
@@ -80,6 +81,7 @@ public class CubeSegmentScanner implements IGTScanner {
         scanRequest = scanRangePlanner.planScanRequest();
         String gtStorage = ((GTCubeStorageQueryBase) context.getStorageQuery()).getGTStorage();
         scanner = new ScannerWorker(cubeSeg, cuboid, scanRequest, gtStorage);
+        isEmpty = scanRequest == null;
     }
 
     @Override

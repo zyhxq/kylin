@@ -22,6 +22,9 @@ import java.util.Comparator;
 import java.util.Iterator;
 import java.util.PriorityQueue;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.google.common.base.Preconditions;
 
 /**
@@ -29,8 +32,13 @@ import com.google.common.base.Preconditions;
  */
 public class SortedIteratorMerger<E> {
 
+    private static final Logger logger = LoggerFactory.getLogger(SortedIteratorMerger.class);
+
     private Iterator<Iterator<E>> shardSubsets;
     private Comparator<E> comparator;
+
+    private int shardCount = 0;
+    private Iterator<E> firstItr;
 
     public SortedIteratorMerger(Iterator<Iterator<E>> shardSubsets, Comparator<E> comparator) {
         this.shardSubsets = shardSubsets;
@@ -47,10 +55,20 @@ public class SortedIteratorMerger<E> {
 
         while (shardSubsets.hasNext()) {
             Iterator<E> iterator = shardSubsets.next();
+            if (shardCount++ == 0) {
+                firstItr = iterator;
+            }
+
             PeekingImpl<E> peekingIterator = new PeekingImpl<>(iterator);
+
             if (peekingIterator.hasNext()) {
                 heap.offer(peekingIterator);
             }
+        }
+
+        if (shardCount == 1) {
+            logger.info("SortedIteratorMerger will downgrade to a single normal iterator");
+            return firstItr;
         }
 
         return getIteratorInternal(heap);
@@ -94,7 +112,6 @@ public class SortedIteratorMerger<E> {
             throw new UnsupportedOperationException();
         }
 
-     
     }
 
 }

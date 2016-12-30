@@ -60,8 +60,12 @@ public class SequentialCubeTupleIterator implements ITupleIterator {
 
         segmentCubeTupleIterators = Lists.newArrayList();
         for (CubeSegmentScanner scanner : scanners) {
-            segmentCubeTupleIterators.add(new SegmentCubeTupleIterator(scanner, cuboid, selectedDimensions, selectedMetrics, returnTupleInfo, context));
+            if (!scanner.isEmpty) {
+                segmentCubeTupleIterators.add(new SegmentCubeTupleIterator(scanner, cuboid, selectedDimensions, selectedMetrics, returnTupleInfo, context));
+            }
         }
+
+        logger.info("Number of segmentCubeTupleIterators: {}", segmentCubeTupleIterators.size());
 
         if (!context.isLimitEnabled()) {
             //normal case
@@ -78,7 +82,7 @@ public class SequentialCubeTupleIterator implements ITupleIterator {
             tupleIterator = new SortedIteratorMergerWithLimit<ITuple>(transformed, context.getFinalPushDownLimit(), getTupleDimensionComparator(cuboid, returnTupleInfo)).getIterator();
         }
     }
-    
+
     public Comparator<ITuple> getTupleDimensionComparator(Cuboid cuboid, TupleInfo returnTupleInfo) {
         // dimensionIndexOnTuple is for SQL with limit
         List<Integer> temp = Lists.newArrayList();
@@ -92,7 +96,7 @@ public class SequentialCubeTupleIterator implements ITupleIterator {
         for (int i = 0; i < temp.size(); i++) {
             dimensionIndexOnTuple[i] = temp.get(i);
         }
-        
+
         return new Comparator<ITuple>() {
             @Override
             public int compare(ITuple o1, ITuple o2) {
