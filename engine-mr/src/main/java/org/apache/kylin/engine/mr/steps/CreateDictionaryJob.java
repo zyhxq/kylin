@@ -65,7 +65,7 @@ public class CreateDictionaryJob extends AbstractHadoopJob {
             public Dictionary<String> getDictionary(TblColRef col) throws IOException {
                 Path colDir = new Path(factColumnsInputPath, col.getName());
                 Path dictFile = new Path(colDir, col.getName() + FactDistinctColumnsReducer.DICT_FILE_POSTFIX);
-                FileSystem fs = HadoopUtil.getFileSystem(dictFile.toString());
+                FileSystem fs = HadoopUtil.getWorkingFileSystem();
                 if (fs.exists(dictFile) == false)
                     return null;
                 

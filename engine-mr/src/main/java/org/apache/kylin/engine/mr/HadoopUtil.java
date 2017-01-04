@@ -30,6 +30,7 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hdfs.DFSConfigKeys;
 import org.apache.hadoop.io.Writable;
+import org.apache.kylin.common.KylinConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -66,10 +67,22 @@ public class HadoopUtil {
         return conf;
     }
 
+    public static FileSystem getWorkingFileSystem() throws IOException {
+        return getFileSystem(KylinConfig.getInstanceFromEnv().getHdfsWorkingDirectory());
+    }
+    
+    public static FileSystem getWorkingFileSystem(Configuration conf) throws IOException {
+        return getFileSystem(KylinConfig.getInstanceFromEnv().getHdfsWorkingDirectory(), conf);
+    }
+    
     public static FileSystem getFileSystem(String path) throws IOException {
-        return FileSystem.get(makeURI(path), getCurrentConfiguration());
+        return getFileSystem(path, getCurrentConfiguration());
     }
 
+    static FileSystem getFileSystem(String path, Configuration conf) throws IOException {
+        return FileSystem.get(makeURI(path), conf);
+    }
+    
     public static URI makeURI(String filePath) {
         try {
             return new URI(fixWindowsPath(filePath));

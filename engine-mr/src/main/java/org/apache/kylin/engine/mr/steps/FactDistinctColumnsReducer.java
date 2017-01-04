@@ -43,6 +43,7 @@ import org.apache.kylin.cube.CubeManager;
 import org.apache.kylin.cube.model.CubeDesc;
 import org.apache.kylin.dict.DictionaryGenerator;
 import org.apache.kylin.dict.IDictionaryBuilder;
+import org.apache.kylin.engine.mr.HadoopUtil;
 import org.apache.kylin.engine.mr.KylinReducer;
 import org.apache.kylin.engine.mr.common.AbstractHadoopJob;
 import org.apache.kylin.engine.mr.common.BatchConstants;
@@ -199,7 +200,7 @@ public class FactDistinctColumnsReducer extends KylinReducer<SelfDefineSortableK
 
     private void outputDistinctValues(TblColRef col, Collection<ByteArray> values, Context context) throws IOException {
         final Configuration conf = context.getConfiguration();
-        final FileSystem fs = FileSystem.get(conf);
+        final FileSystem fs = HadoopUtil.getWorkingFileSystem(conf);
         final String outputPath = conf.get(BatchConstants.CFG_OUTPUT_PATH);
         final Path colDir = new Path(outputPath, col.getName());
         final String fileName = col.getName() + "-" + taskId % uhcReducerCount;
@@ -255,7 +256,7 @@ public class FactDistinctColumnsReducer extends KylinReducer<SelfDefineSortableK
 
     private FSDataOutputStream getOutputStream(Context context, String outputFileName) throws IOException {
         final Configuration conf = context.getConfiguration();
-        final FileSystem fs = FileSystem.get(conf);
+        final FileSystem fs = HadoopUtil.getWorkingFileSystem(conf);
         final String outputPath = conf.get(BatchConstants.CFG_OUTPUT_PATH);
         final Path colDir = new Path(outputPath, col.getName());
         final Path outputFile = new Path(colDir, outputFileName);
@@ -304,8 +305,9 @@ public class FactDistinctColumnsReducer extends KylinReducer<SelfDefineSortableK
 
     private void writeMapperAndCuboidStatistics(Context context) throws IOException {
         Configuration conf = context.getConfiguration();
-        FileSystem fs = FileSystem.get(conf);
-        FSDataOutputStream out = fs.create(new Path(statisticsOutput, BatchConstants.CFG_STATISTICS_CUBE_ESTIMATION_FILENAME));
+        FileSystem fs = HadoopUtil.getWorkingFileSystem(conf);
+        Path path = new Path(statisticsOutput, BatchConstants.CFG_STATISTICS_CUBE_ESTIMATION_FILENAME);
+        FSDataOutputStream out = fs.create(path);
 
         try {
             String msg;
