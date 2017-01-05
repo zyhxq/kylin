@@ -72,17 +72,30 @@ public class HadoopUtil {
     }
     
     public static FileSystem getWorkingFileSystem(Configuration conf) throws IOException {
-        return getFileSystem(KylinConfig.getInstanceFromEnv().getHdfsWorkingDirectory(), conf);
+        Path workingPath = new Path(KylinConfig.getInstanceFromEnv().getHdfsWorkingDirectory());
+        return getFileSystem(workingPath, conf);
     }
     
     public static FileSystem getFileSystem(String path) throws IOException {
-        return getFileSystem(path, getCurrentConfiguration());
-    }
-
-    static FileSystem getFileSystem(String path, Configuration conf) throws IOException {
-        return FileSystem.get(makeURI(path), conf);
+        return getFileSystem(new Path(makeURI(path)));
     }
     
+    public static FileSystem getFileSystem(Path path) throws IOException {
+        Configuration conf = getCurrentConfiguration();
+        return getFileSystem(path, conf);
+    }
+    
+    public static FileSystem getFileSystem(Path path, Configuration conf) {
+        if (StringUtils.isBlank(path.toUri().getScheme()))
+            throw new IllegalArgumentException("Path must be qualified: " + path);
+        
+        try {
+            return path.getFileSystem(conf);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     public static URI makeURI(String filePath) {
         try {
             return new URI(fixWindowsPath(filePath));
