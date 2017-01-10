@@ -70,11 +70,8 @@ public class HackedDbUnitAssert extends DbUnitAssert {
         //            throw error;
         //        }
 
-        // if both tables are empty, it is not necessary to compare columns, as
-        // such
-        // comparison
-        // can fail if column metadata is different (which could occurs when
-        // comparing empty tables)
+        // if both tables are empty, it is not necessary to compare columns, as such comparison
+        // can fail if column metadata is different (which could occurs when comparing empty tables)
         if (expectedTable.getRowCount() == 0 &&  actualTable.getRowCount() == 0) {
             logger.debug("Tables are empty, hence equals.");
             return;
