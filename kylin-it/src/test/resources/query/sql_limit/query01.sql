@@ -16,6 +16,6 @@
 -- limitations under the License.
 --
 
-select * from test_kylin_fact
+select cal_dt, lstg_format_name, seller_id from test_kylin_fact
   where lstg_format_name='FP-GTC' 
  limit 20
