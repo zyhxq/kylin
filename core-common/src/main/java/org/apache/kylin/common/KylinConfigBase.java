@@ -181,7 +181,7 @@ abstract public class KylinConfigBase implements Serializable {
         if (!root.endsWith("/")) {
             root += "/";
         }
-        
+
         // make sure path qualified
         if (!root.contains("://")) {
             if (!root.startsWith("/"))
@@ -189,7 +189,7 @@ abstract public class KylinConfigBase implements Serializable {
             else
                 root = "hdfs://" + root;
         }
-        
+
         return new StringBuffer(root).append(StringUtils.replaceChars(getMetadataUrlPrefix(), ':', '-')).append("/").toString();
     }
 
@@ -199,6 +199,11 @@ abstract public class KylinConfigBase implements Serializable {
 
     public String getMetadataUrl() {
         return getOptional("kylin.metadata.url");
+    }
+
+    //for hdfs resource store
+    public String getHDFSMetadataUrl() {
+        return getOptional("kylin.metadata.hdfs.url", "kylin_default_instance_hdfs@hdfs");
     }
 
     // for test only
