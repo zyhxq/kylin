@@ -40,10 +40,9 @@ import java.util.TreeMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.kylin.common.KylinConfig;
+import org.apache.kylin.common.util.HadoopUtil;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Ignore;
@@ -78,10 +77,9 @@ public class AppendTrieDictionaryTest {
     }
 
     public static void cleanup() {
-        Configuration conf = new Configuration();
         Path basePath = new Path(BASE_DIR);
         try {
-            FileSystem.get(basePath.toUri(), conf).delete(basePath, true);
+            HadoopUtil.getFileSystem(basePath).delete(basePath, true);
         } catch (IOException e) {}
     }
 
