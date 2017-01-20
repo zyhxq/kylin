@@ -43,13 +43,17 @@ import java.util.concurrent.TimeUnit;
 
 public class HDFSResourceStore extends ResourceStore {
 
+    private static final Logger logger = LoggerFactory.getLogger(HDFSResourceStore.class);
+
+    private static final long DEFAULT_ACQUIRE_LOCK_TIMEOUT = 10;
+
     private static final String DEFAULT_FOLDER_NAME = "kylin_default_instance";
+
+    private static final String DEFAULT_METADATA_FOLDER_NAME = "hdfs_metadata";
 
     private Path hdfsMetaPath;
 
     private FileSystem fs;
-
-    private static final Logger logger = LoggerFactory.getLogger(HDFSResourceStore.class);
 
     private LockManager lockManager;
 
@@ -59,7 +63,7 @@ public class HDFSResourceStore extends ResourceStore {
         String metadataUrl = kylinConfig.getMetadataUrl();
         int cut = metadataUrl.indexOf('@');
         String metaDirName = cut < 0 ? DEFAULT_FOLDER_NAME : metadataUrl.substring(0, cut);
-        metaDirName += "/hdfs_metadata";
+        metaDirName += "/" + DEFAULT_METADATA_FOLDER_NAME;
         logger.info("meta dir name :" + metaDirName);
         createMetaFolder(metaDirName, kylinConfig);
     }
@@ -73,13 +77,13 @@ public class HDFSResourceStore extends ResourceStore {
             throw new IOException("HDFS working dir not exist");
         }
         //creat lock manager
-        this.lockManager = new LockManager(kylinConfig,kylinConfig.getRawHdfsWorkingDirectory() + metaDirName);
+        this.lockManager = new LockManager(kylinConfig, kylinConfig.getRawHdfsWorkingDirectory() + metaDirName);
         //create hdfs meta path
         hdfsMetaPath = new Path(hdfsWorkingPath, metaDirName);
         if (!fs.exists(hdfsMetaPath)) {
             ResourceLock lock = lockManager.getLock(lockManager.getLockPath("/"));
             try {
-                if (lock.acquire(ZookeeperConfig.DEFAULT_TIMEOUT, TimeUnit.MINUTES)) {
+                if (lock.acquire(DEFAULT_ACQUIRE_LOCK_TIMEOUT, TimeUnit.MINUTES)) {
                     logger.info("get root lock successfully");
                     if (!fs.exists(hdfsMetaPath)) {
                         fs.mkdirs(hdfsMetaPath);
@@ -163,7 +167,7 @@ public class HDFSResourceStore extends ResourceStore {
         ResourceLock lock = null;
         try {
             lock = lockManager.getLock(resPath);
-            lock.acquire(ZookeeperConfig.DEFAULT_TIMEOUT, TimeUnit.MINUTES);
+            lock.acquire(DEFAULT_ACQUIRE_LOCK_TIMEOUT, TimeUnit.MINUTES);
             in = fs.open(p);
             long t = in.readLong();
             return t;
@@ -185,7 +189,7 @@ public class HDFSResourceStore extends ResourceStore {
         ResourceLock lock = null;
         try {
             lock = lockManager.getLock(resPath);
-            lock.acquire(ZookeeperConfig.DEFAULT_TIMEOUT, TimeUnit.MINUTES);
+            lock.acquire(DEFAULT_ACQUIRE_LOCK_TIMEOUT, TimeUnit.MINUTES);
             out = fs.create(p, true);
             out.writeLong(ts);
             IOUtils.copy(content, out);
@@ -221,7 +225,7 @@ public class HDFSResourceStore extends ResourceStore {
         ResourceLock lock = null;
         try {
             lock = lockManager.getLock(resPath);
-            lock.acquire(ZookeeperConfig.DEFAULT_TIMEOUT, TimeUnit.MINUTES);
+            lock.acquire(DEFAULT_ACQUIRE_LOCK_TIMEOUT, TimeUnit.MINUTES);
             Path p = getRealHDFSPath(resPath);
             if (fs.exists(p)) {
                 fs.delete(p, true);
@@ -243,6 +247,5 @@ public class HDFSResourceStore extends ResourceStore {
             resourcePath = resourcePath.substring(1, resourcePath.length());
         return new Path(this.hdfsMetaPath, resourcePath);
     }
-
 
 }

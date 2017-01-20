@@ -775,7 +775,6 @@ abstract public class KylinConfigBase implements Serializable {
         return Float.valueOf(getOptional("kylin.engine.spark.rdd-partition-cut-mb", "10.0"));
     }
 
-
     public int getSparkMinPartition() {
         return Integer.valueOf(getOptional("kylin.engine.spark.min-partition", "1"));
     }
@@ -923,6 +922,15 @@ abstract public class KylinConfigBase implements Serializable {
 
     public boolean isWebCrossDomainEnabled() {
         return Boolean.parseBoolean(getOptional("kylin.web.cross-domain-enabled", "true"));
+    }
+
+    //zoo keeper
+    public String getZooKeeperHost() {
+        return getOptional("kylin.storage-zookeeper.host", "localhost");
+    }
+
+    public String getZooKeeperPort() {
+        return getOptional("kylin.storage-zookeeper.port", "2181");
     }
 
 }

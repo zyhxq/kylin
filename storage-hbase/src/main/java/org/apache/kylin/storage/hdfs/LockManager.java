@@ -27,7 +27,6 @@ import org.apache.curator.framework.recipes.locks.InterProcessMutex;
 import org.apache.curator.retry.ExponentialBackoffRetry;
 import org.apache.kylin.common.KylinConfig;
 import org.apache.kylin.storage.hbase.util.ZookeeperDistributedJobLock;
-import org.apache.zookeeper.CreateMode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,15 +43,15 @@ public class LockManager {
 
     private String lockRootPath;
 
-    public LockManager(String lockRootPath) throws Exception{
+    public LockManager(String lockRootPath) throws Exception {
 
-        this(KylinConfig.getInstanceFromEnv(),lockRootPath);
+        this(KylinConfig.getInstanceFromEnv(), lockRootPath);
     }
 
-    public LockManager(KylinConfig config,String lockRootPath) throws Exception{
+    public LockManager(KylinConfig config, String lockRootPath) throws Exception {
         this.config = config;
         this.lockRootPath = lockRootPath;
-        String zkConnectString = getZKConnectString();
+        String zkConnectString = getZKConnectString(config);
         logger.info("zk connection string:" + zkConnectString);
         if (StringUtils.isEmpty(zkConnectString)) {
             throw new IllegalArgumentException("ZOOKEEPER_QUORUM is empty!");
@@ -60,7 +59,7 @@ public class LockManager {
         RetryPolicy retryPolicy = new ExponentialBackoffRetry(1000, 3);
         zkClient = CuratorFrameworkFactory.newClient(zkConnectString, retryPolicy);
         zkClient.start();
-        if(zkClient.checkExists().forPath(lockRootPath) == null)
+        if (zkClient.checkExists().forPath(lockRootPath) == null)
             zkClient.create().creatingParentsIfNeeded().forPath(lockRootPath);
         Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
             @Override
@@ -86,10 +85,10 @@ public class LockManager {
         }
     }
 
-    private static String getZKConnectString() {
-        final String serverList = ZookeeperConfig.DEFAULT_ZK_HOST;
-        final String port = ZookeeperConfig.DEFAULT_ZK_PORT;
-        return StringUtils.join(Iterables.transform(Arrays.asList(serverList.split(",")), new Function<String, String>() {
+    private static String getZKConnectString(KylinConfig kylinConfig) {
+        final String host = kylinConfig.getZooKeeperHost();
+        final String port = kylinConfig.getZooKeeperPort();
+        return StringUtils.join(Iterables.transform(Arrays.asList(host.split(",")), new Function<String, String>() {
             @Nullable
             @Override
             public String apply(String input) {
