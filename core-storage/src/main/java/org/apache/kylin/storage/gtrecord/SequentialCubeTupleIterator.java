@@ -33,6 +33,7 @@ import org.apache.kylin.metadata.tuple.ITuple;
 import org.apache.kylin.metadata.tuple.ITupleIterator;
 import org.apache.kylin.metadata.tuple.TupleInfo;
 import org.apache.kylin.storage.StorageContext;
+import org.apache.kylin.storage.exception.ScanOutOfLimitException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -136,6 +137,11 @@ public class SequentialCubeTupleIterator implements ITupleIterator {
 
     @Override
     public boolean hasNext() {
+
+        if (scanCount >= context.getThreshold()) {
+            throw new ScanOutOfLimitException("Scan row count exceeded threshold at query level: " + context.getThreshold() + ", please add filter condition to narrow down backend scan range, like where clause.");
+        }
+        
         return tupleIterator.hasNext();
     }
 
