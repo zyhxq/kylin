@@ -602,7 +602,7 @@ public class SqlToRelConverter {
          *   LogicalSort (optional)
          *    |- LogicalProject
          *        |- LogicalFilter (optional)
-         *            |- OLAPTableScan
+         *            |- OLAPTableScan or LogicalJoin
          */
         LogicalProject rootPrj = null;
         LogicalSort rootSort = null;
@@ -617,8 +617,8 @@ public class SqlToRelConverter {
 
         RelNode input = rootPrj.getInput();
         if (!(//
-                input.getClass().getSimpleName().equals("OLAPTableScan")//
-                        || (input.getClass().getSimpleName().equals("LogicalFilter") && input.getInput(0).getClass().getSimpleName().equals("OLAPTableScan"))//
+                isAmong(input, "OLAPTableScan", "LogicalJoin")//
+                || (isAmong(input, "LogicalFilter") && isAmong(input.getInput(0), "OLAPTableScan", "LogicalJoin"))//
         ))
             return root;
 
@@ -652,6 +652,15 @@ public class SqlToRelConverter {
         validator.setValidatedNodeType(query, validRowType);
 
         return root;
+    }
+
+    private boolean isAmong(RelNode rel, String... names) {
+        String simpleName = rel.getClass().getSimpleName();
+        for (String n : names) {
+            if (simpleName.equals(n))
+                return true;
+        }
+        return false;
     }
 
     private static boolean isStream(SqlNode query) {

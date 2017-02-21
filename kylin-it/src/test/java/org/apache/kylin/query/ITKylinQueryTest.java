@@ -394,5 +394,6 @@ public class ITKylinQueryTest extends KylinTestBase {
     public void testSelectStarColumnCount() throws Exception {
         execAndCompColumnCount("select * from test_kylin_fact limit 10", 9);
         execAndCompColumnCount("select * from test_kylin_fact", 9);
+        execAndCompColumnCount("select * from     test_kylin_fact left join edw.test_cal_dt on test_kylin_fact.cal_dt = edw.test_cal_dt.CAL_DT    limit 10", 11);
     }
 }
