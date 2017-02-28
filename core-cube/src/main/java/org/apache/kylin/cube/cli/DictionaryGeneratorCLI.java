@@ -74,15 +74,26 @@ public class DictionaryGeneratorCLI {
 
         // snapshot
         Set<String> toSnapshot = Sets.newHashSet();
+        Set<TableRef> toCheckLookup = Sets.newHashSet();
         for (DimensionDesc dim : cubeSeg.getCubeDesc().getDimensions()) {
             TableRef table = dim.getTableRef();
-            if (cubeSeg.getModel().isLookupTable(table))
+            if (cubeSeg.getModel().isLookupTable(table)) {
                 toSnapshot.add(table.getTableIdentity());
+                toCheckLookup.add(table);
+            }
         }
 
         for (String tableIdentity : toSnapshot) {
             logger.info("Building snapshot of " + tableIdentity);
             cubeMgr.buildSnapshotTable(cubeSeg, tableIdentity);
+        }
+        
+        for (DimensionDesc dim : cubeSeg.getCubeDesc().getDimensions()) {
+            TableRef lookup = dim.getTableRef();
+            if (toCheckLookup.contains(lookup)) {
+                logger.info("Checking snapshot of " + lookup);
+                cubeMgr.getLookupTable(cubeSeg, dim);
+            }
         }
     }
 
