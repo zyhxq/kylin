@@ -22,6 +22,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.mapreduce.Counters;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.TaskCounter;
@@ -93,9 +94,18 @@ public class HadoopCmdOutput {
             this.output.append(counters.toString()).append("\n");
             logger.debug(counters.toString());
 
+            String bytsWrittenCounterName = "HDFS_BYTES_WRITTEN";
+            String bytsReadCounterName = "HDFS_BYTES_READ";
+            String fsScheme = FileSystem.get(job.getConfiguration()).getScheme();
+            if (("wasb").equalsIgnoreCase(fsScheme)) {
+                // for Azure blob store
+                bytsWrittenCounterName = "WASB_BYTES_WRITTEN";
+                bytsReadCounterName = "WASB_BYTES_READ";
+            }
+
             mapInputRecords = String.valueOf(counters.findCounter(TaskCounter.MAP_INPUT_RECORDS).getValue());
-            hdfsBytesWritten = String.valueOf(counters.findCounter("FileSystemCounters", "HDFS_BYTES_WRITTEN").getValue());
-            hdfsBytesRead = String.valueOf(counters.findCounter("FileSystemCounters", "HDFS_BYTES_READ").getValue());
+            hdfsBytesWritten = String.valueOf(counters.findCounter("FileSystemCounters", bytsWrittenCounterName).getValue());
+            hdfsBytesRead = String.valueOf(counters.findCounter("FileSystemCounters", bytsReadCounterName).getValue());
         } catch (Exception e) {
             logger.error(e.getLocalizedMessage(), e);
             output.append(e.getLocalizedMessage());
