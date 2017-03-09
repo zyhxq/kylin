@@ -274,7 +274,7 @@ public class CubeMetaExtractor extends AbstractInfoExtractor {
                 objectMapper.writeValue(f, rootNode);
             }
         } catch (JsonProcessingException ex) {
-            logger.info("cannot parse file {}", f);
+            logger.info("cannot parse file {}", f, ex);
         }
     }
 

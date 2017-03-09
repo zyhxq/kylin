@@ -80,8 +80,7 @@ public class SparkExecutable extends AbstractExecutable {
         String jars = this.getParam(JARS);
 
         //hadoop conf dir
-        String hadoopConf = null;
-        hadoopConf = System.getProperty("kylin.hadoop.conf.dir");
+        String hadoopConf = System.getProperty("kylin.hadoop.conf.dir");
 
         if (StringUtils.isEmpty(hadoopConf)) {
             throw new RuntimeException("kylin_hadoop_conf_dir is empty, check if there's error in the output of 'kylin.sh start'");

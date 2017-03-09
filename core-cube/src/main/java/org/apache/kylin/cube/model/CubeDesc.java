@@ -440,7 +440,7 @@ public class CubeDesc extends RootPersistentEntity implements IEngineAware {
     }
 
     public int getBuildLevel() {
-        if (aggregationGroups == null || aggregationGroups.size() == 0)
+        if (aggregationGroups == null || aggregationGroups.isEmpty())
             throw new IllegalStateException("Cube has no aggregation group.");
 
         return Collections.max(Collections2.transform(aggregationGroups, new Function<AggregationGroup, Integer>() {

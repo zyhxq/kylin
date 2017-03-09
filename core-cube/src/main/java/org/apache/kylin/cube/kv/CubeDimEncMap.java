@@ -34,7 +34,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 
-public class CubeDimEncMap implements IDimensionEncodingMap, java.io.Serializable {
+public class CubeDimEncMap implements IDimensionEncodingMap {
 
     private static final Logger logger = LoggerFactory.getLogger(CubeDimEncMap.class);
 

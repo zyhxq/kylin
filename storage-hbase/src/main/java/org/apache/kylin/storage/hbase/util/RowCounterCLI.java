@@ -21,6 +21,7 @@ package org.apache.kylin.storage.hbase.util;
 import java.io.IOException;
 import java.util.Iterator;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Connection;
@@ -43,6 +44,7 @@ public class RowCounterCLI {
 
         if (args == null || args.length != 3) {
             System.out.println("Usage: hbase org.apache.hadoop.util.RunJar kylin-job-latest.jar org.apache.kylin.job.tools.RowCounterCLI [HTABLE_NAME] [STARTKEY] [ENDKEY]");
+            return;
         }
 
         System.out.println(args[0]);
@@ -71,20 +73,24 @@ public class RowCounterCLI {
 
         logger.info("My Scan " + scan.toString());
 
-        Connection conn = ConnectionFactory.createConnection(conf);
-        Table tableInterface = conn.getTable(TableName.valueOf(htableName));
+        Connection conn = null;
+        try {
+            conn = ConnectionFactory.createConnection(conf);
+            Table tableInterface = conn.getTable(TableName.valueOf(htableName));
 
-        Iterator<Result> iterator = tableInterface.getScanner(scan).iterator();
-        int counter = 0;
-        while (iterator.hasNext()) {
-            iterator.next();
-            counter++;
-            if (counter % 1000 == 1) {
-                System.out.println("number of rows: " + counter);
+            Iterator<Result> iterator = tableInterface.getScanner(scan).iterator();
+            int counter = 0;
+            while (iterator.hasNext()) {
+                iterator.next();
+                counter++;
+                if (counter % 1000 == 1) {
+                    System.out.println("number of rows: " + counter);
+                }
             }
+            System.out.println("number of rows: " + counter);
+            tableInterface.close();
+        }finally {
+            IOUtils.closeQuietly(conn);
         }
-        System.out.println("number of rows: " + counter);
-        tableInterface.close();
-        conn.close();
     }
 }

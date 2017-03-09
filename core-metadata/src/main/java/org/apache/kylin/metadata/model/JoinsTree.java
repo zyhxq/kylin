@@ -30,7 +30,7 @@ import com.google.common.base.Preconditions;
 public class JoinsTree  implements Serializable {
     private static final long serialVersionUID = 1L;
     
-    final Map<String, Chain> tableChains = new LinkedHashMap<>();
+    final HashMap<String, Chain> tableChains = new LinkedHashMap<>();
 
     public JoinsTree(TableRef rootTable, List<JoinDesc> joins) {
         for (JoinDesc join : joins) {

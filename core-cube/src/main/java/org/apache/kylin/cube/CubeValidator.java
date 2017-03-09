@@ -95,6 +95,10 @@ public class CubeValidator {
         // for all other segments, sourceOffset SHOULD fit/connect other segments
         for (CubeSegment seg : news) {
             Pair<Boolean, Boolean> pair = fitInSegments(all, seg);
+            if(pair == null) {
+                logger.warn("Empty segment found, ignore");
+                continue;
+            }
             boolean startFit = pair.getFirst();
             boolean endFit = pair.getSecond();
 

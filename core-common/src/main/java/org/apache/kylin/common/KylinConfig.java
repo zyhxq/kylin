@@ -24,10 +24,8 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.PrintWriter;
 import java.io.StringReader;
 import java.nio.charset.Charset;
-import java.util.Enumeration;
 import java.util.Map;
 import java.util.Properties;
 
@@ -359,39 +357,6 @@ public class KylinConfig extends KylinConfigBase {
             return false;
         else
             return this.base() == ((KylinConfig) another).base();
-    }
-
-    public static void writeOverrideProperties(Properties properties) throws IOException {
-        File propFile = getKylinPropertiesFile();
-        File overrideFile = new File(propFile.getParentFile(), propFile.getName() + ".override");
-        overrideFile.createNewFile();
-        FileInputStream fis2 = null;
-        Properties override = new Properties();
-        try {
-            fis2 = new FileInputStream(overrideFile);
-            override.load(fis2);
-            for (Map.Entry<Object, Object> entries : properties.entrySet()) {
-                override.setProperty(entries.getKey().toString(), entries.getValue().toString());
-            }
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        } finally {
-            IOUtils.closeQuietly(fis2);
-        }
-
-        PrintWriter pw = null;
-        try {
-            pw = new PrintWriter(overrideFile);
-            Enumeration<?> e = override.propertyNames();
-            while (e.hasMoreElements()) {
-                String key = (String) e.nextElement();
-                pw.println(key + "=" + override.getProperty(key));
-            }
-            pw.close();
-        } finally {
-            IOUtils.closeQuietly(pw);
-        }
-
     }
 
     private static void dumpStackTrace() {

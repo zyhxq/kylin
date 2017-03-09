@@ -19,6 +19,7 @@
 package org.apache.kylin.cube;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -99,7 +100,7 @@ public class CubeSegment implements Comparable<CubeSegment>, IBuildable, ISegmen
     private ConcurrentHashMap<String, String> snapshots; // table name ==> snapshot resource path
 
     @JsonProperty("rowkey_stats")
-    private List<Object[]> rowkeyStats = Lists.newArrayList();
+    private ArrayList<Object[]> rowkeyStats = Lists.newArrayList();
 
     @JsonProperty("source_partition_offset_start")
     @JsonInclude(JsonInclude.Include.NON_EMPTY)

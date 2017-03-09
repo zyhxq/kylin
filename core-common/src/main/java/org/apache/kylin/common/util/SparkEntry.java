@@ -28,7 +28,7 @@ public final class SparkEntry {
         if (!(args.length >= 2)) {
             throw new IllegalArgumentException(String.valueOf("-className is required"));
         }
-        if (!(args[0].equals("-className"))) {
+        if (!("-className".equals(args[0]))) {
             throw new IllegalArgumentException(String.valueOf("-className is required"));
         }
         final String className = args[1];

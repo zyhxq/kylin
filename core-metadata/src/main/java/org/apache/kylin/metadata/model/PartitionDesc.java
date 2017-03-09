@@ -173,7 +173,7 @@ public class PartitionDesc implements Serializable {
     
     // ============================================================================
 
-    public static interface IPartitionConditionBuilder {
+    public static interface IPartitionConditionBuilder extends java.io.Serializable{
         String buildDateRangeCondition(PartitionDesc partDesc, long startInclusive, long endExclusive);
     }
 

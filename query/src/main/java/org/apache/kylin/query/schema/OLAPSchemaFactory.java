@@ -33,6 +33,7 @@ import org.apache.calcite.schema.SchemaFactory;
 import org.apache.calcite.schema.SchemaPlus;
 import org.apache.calcite.util.ConversionUtil;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.kylin.common.KylinConfig;
 import org.apache.kylin.measure.MeasureTypeFactory;
@@ -101,10 +102,11 @@ public class OLAPSchemaFactory implements SchemaFactory {
             }
         }
 
+        FileWriter out = null;
         try {
             File tmp = File.createTempFile("olap_model_", ".json");
 
-            FileWriter out = new FileWriter(tmp);
+            out = new FileWriter(tmp);
             out.write("{\n");
             out.write("    \"version\": \"1.0\",\n");
             out.write("    \"defaultSchema\": \"" + majoritySchemaName + "\",\n");
@@ -138,6 +140,8 @@ public class OLAPSchemaFactory implements SchemaFactory {
 
         } catch (IOException e) {
             throw new RuntimeException(e);
+        } finally {
+            IOUtils.closeQuietly(out);
         }
     }
 

@@ -49,7 +49,7 @@ public class HDFSResourceStore extends ResourceStore {
 
     private FileSystem fs;
 
-    public HDFSResourceStore(KylinConfig kylinConfig) throws Exception {
+    public HDFSResourceStore(KylinConfig kylinConfig) throws IOException {
         super(kylinConfig);
         String metadataUrl = kylinConfig.getMetadataUrl();
         int cut = metadataUrl.indexOf('@');
@@ -73,7 +73,7 @@ public class HDFSResourceStore extends ResourceStore {
 
     }
 
-    private void createMetaFolder(Path metaDirName, KylinConfig kylinConfig) throws Exception {
+    private void createMetaFolder(Path metaDirName, KylinConfig kylinConfig) throws IOException {
         //create hdfs meta path
         if (!fs.exists(metaDirName)) {
             fs.mkdirs(metaDirName);

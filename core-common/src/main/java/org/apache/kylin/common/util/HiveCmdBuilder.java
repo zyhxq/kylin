@@ -62,9 +62,11 @@ public class HiveCmdBuilder {
             break;
         case BEELINE:
             BufferedWriter bw = null;
+            FileWriter fw = null;
             try {
                 File tmpHql = File.createTempFile("beeline_", ".hql");
-                bw = new BufferedWriter(new FileWriter(tmpHql));
+                fw = new FileWriter(tmpHql);
+                bw = new BufferedWriter(fw);
                 for (String statement : statements) {
                     bw.write(statement);
                     bw.newLine();
@@ -84,6 +86,7 @@ public class HiveCmdBuilder {
                 throw new RuntimeException(e);
             } finally {
                 IOUtils.closeQuietly(bw);
+                IOUtils.closeQuietly(fw);
             }
             break;
         default:

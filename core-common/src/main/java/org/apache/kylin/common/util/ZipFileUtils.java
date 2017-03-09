@@ -40,18 +40,23 @@ public class ZipFileUtils {
             throw new RuntimeException("Zipfile must end with .zip");
         }
         ZipOutputStream zipFile = null;
+        FileOutputStream fos = null;
         try {
-            zipFile = new ZipOutputStream(new FileOutputStream(zipFilename));
+            fos = new FileOutputStream(zipFilename);
+            zipFile = new ZipOutputStream(fos);
             compressDirectoryToZipfile(normDir(new File(sourceDir).getParent()), normDir(sourceDir), zipFile);
         } finally {
             IOUtils.closeQuietly(zipFile);
+            IOUtils.closeQuietly(fos);
         }
     }
 
     public static void decompressZipfileToDirectory(String zipFileName, File outputFolder) throws IOException {
         ZipInputStream zipInputStream = null;
+        FileInputStream fis = null;
         try {
-            zipInputStream = new ZipInputStream(new FileInputStream(zipFileName));
+            fis = new FileInputStream(zipFileName);
+            zipInputStream = new ZipInputStream(fis);
             ZipEntry zipEntry = null;
             while ((zipEntry = zipInputStream.getNextEntry()) != null) {
                 logger.info("decompressing " + zipEntry.getName() + " is directory:" + zipEntry.isDirectory() + " available: " + zipInputStream.available());
@@ -73,6 +78,7 @@ public class ZipFileUtils {
             }
         } finally {
             IOUtils.closeQuietly(zipInputStream);
+            IOUtils.closeQuietly(fis);
         }
     }
 

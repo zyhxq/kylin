@@ -22,7 +22,7 @@ import java.util.List;
 
 /**
  */
-public interface IJoinedFlatTableDesc {
+public interface IJoinedFlatTableDesc extends java.io.Serializable{
 
     String getTableName();
 

@@ -30,7 +30,7 @@ import org.apache.kylin.metadata.model.TblColRef;
  * hard to enumerate all values of a encoding, thus TupleFilterDictionaryTranslater 
  * cannot work on DimensionEncoding.
  */
-public interface IDimensionEncodingMap {
+public interface IDimensionEncodingMap extends java.io.Serializable {
 
     /** Get dimension encoding of a column */
     DimensionEncoding get(TblColRef col);

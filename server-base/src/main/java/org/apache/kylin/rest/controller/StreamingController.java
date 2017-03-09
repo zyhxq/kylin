@@ -108,6 +108,9 @@ public class StreamingController extends BasicController {
 
         StreamingConfig streamingConfig = deserializeSchemalDesc(streamingRequest);
         KafkaConfig kafkaConfig = deserializeKafkaSchemalDesc(streamingRequest);
+        if(streamingConfig == null || kafkaConfig == null){
+            return streamingRequest;
+        }
         boolean saveStreamingSuccess = false, saveKafkaSuccess = false;
 
         try {

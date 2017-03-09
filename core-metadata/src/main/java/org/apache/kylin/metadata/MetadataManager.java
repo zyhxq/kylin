@@ -261,15 +261,14 @@ public class MetadataManager {
         String path = desc.getResourcePath();
         getStore().putResource(path, desc, EXTERNAL_FILTER_DESC_SERIALIZER);
         desc = reloadExternalFilterAt(path);
-        extFilterMap.put(desc.getName(), desc);
-
+        if(desc != null)
+            extFilterMap.put(desc.getName(), desc);
     }
 
     public void removeExternalFilter(String name) throws IOException {
         String path = ExternalFilterDesc.concatResourcePath(name);
         getStore().deleteResource(path);
         extFilterMap.remove(name);
-
     }
 
     private void init(KylinConfig config) throws IOException {
