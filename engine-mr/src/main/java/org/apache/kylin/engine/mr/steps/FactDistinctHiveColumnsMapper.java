@@ -30,6 +30,7 @@ import org.apache.kylin.cube.cuboid.CuboidScheduler;
 import org.apache.kylin.engine.mr.common.BatchConstants;
 import org.apache.kylin.measure.BufferedMeasureCodec;
 import org.apache.kylin.measure.hllc.HyperLogLogPlusCounter;
+import org.apache.kylin.metadata.datatype.DataType;
 import org.apache.kylin.metadata.model.TblColRef;
 
 import com.google.common.collect.Lists;
@@ -58,6 +59,8 @@ public class FactDistinctHiveColumnsMapper<KEYIN> extends FactDistinctColumnsMap
 
     private int partitionColumnIndex = -1;
     private boolean needFetchPartitionCol = true;
+
+    private SelfDefineSortableKey sortableKey = new SelfDefineSortableKey();
 
     @Override
     protected void setup(Context context) throws IOException {
@@ -146,9 +149,10 @@ public class FactDistinctHiveColumnsMapper<KEYIN> extends FactDistinctColumnsMap
                 keyBuffer.put(Bytes.toBytes(reducerIndex)[3]);
                 keyBuffer.put(Bytes.toBytes(fieldValue));
                 outputKey.set(keyBuffer.array(), offset, keyBuffer.position() - offset);
-                sortableKey.setText(outputKey);
+                DataType type = factDictCols.get(i).getType();
+                sortableKey.init(outputKey, type);
                 //judge type
-                sortableKey.setTypeIdByDatatype(factDictCols.get(i).getType());
+
                 context.write(sortableKey, EMPTY_TEXT);
             }
         } catch (Exception ex) {
@@ -167,8 +171,7 @@ public class FactDistinctHiveColumnsMapper<KEYIN> extends FactDistinctColumnsMap
                     keyBuffer.put(MARK_FOR_PARTITION_COL);
                     keyBuffer.put(Bytes.toBytes(fieldValue));
                     outputKey.set(keyBuffer.array(), offset, keyBuffer.position() - offset);
-                    sortableKey.setText(outputKey);
-                    sortableKey.setTypeId((byte) 0);
+                    sortableKey.init(outputKey, (byte) 0);
                     context.write(sortableKey, EMPTY_TEXT);
                 }
             }
@@ -218,8 +221,7 @@ public class FactDistinctHiveColumnsMapper<KEYIN> extends FactDistinctColumnsMap
                 hllBuf.clear();
                 hll.writeRegisters(hllBuf);
                 outputValue.set(hllBuf.array(), 0, hllBuf.position());
-                sortableKey.setText(outputKey);
-                sortableKey.setTypeId((byte) 0);
+                sortableKey.init(outputKey, (byte) 0);
                 context.write(sortableKey, outputValue);
             }
         }
