@@ -50,7 +50,7 @@ public class SelfDefineSortableKey implements WritableComparable<SelfDefineSorta
         if (isNumberFamily()) {
             String valueStr = new String(key.getBytes(), 1, key.getLength() - 1);
             if (isIntegerFamily()) {
-                this.keyInObj = Integer.parseInt(valueStr);
+                this.keyInObj = Long.parseLong(valueStr);
             } else {
                 this.keyInObj = Double.parseDouble(valueStr);
             }
@@ -71,7 +71,7 @@ public class SelfDefineSortableKey implements WritableComparable<SelfDefineSorta
             return ((Text) this.keyInObj).compareTo(((Text) o.keyInObj));
         } else {
             if (isIntegerFamily()) {
-                return Integer.compare((Integer) this.keyInObj, (Integer) o.keyInObj);
+                return Long.compare((Long) this.keyInObj, (Long) o.keyInObj);
             } else {
                 return Double.compare((Double) this.keyInObj, (Double) o.keyInObj);
             }
