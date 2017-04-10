@@ -215,6 +215,20 @@ public class CompareTupleFilter extends TupleFilter {
         return ((function != null && function.isEvaluable()) || column != null) && !conditionValues.isEmpty();
     }
 
+    public boolean alwaysReturnTrue() {
+        // 1 = 1
+        if (this.operator == FilterOperatorEnum.EQ) {
+            if (this.children != null && this.children.size() == 2 && //
+                    this.children.get(0) instanceof ConstantTupleFilter && //
+                    this.children.get(1) instanceof ConstantTupleFilter && //
+                    ((ConstantTupleFilter) this.children.get(0)).getValues().equals(((ConstantTupleFilter) this.children.get(1)).getValues())) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     @SuppressWarnings({ "unchecked", "rawtypes" })
     @Override
     public void serialize(IFilterCodeSystem cs, ByteBuffer buffer) {
