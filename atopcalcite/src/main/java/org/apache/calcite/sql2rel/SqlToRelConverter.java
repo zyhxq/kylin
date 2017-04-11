@@ -596,14 +596,14 @@ public class SqlToRelConverter {
 
     /* OVERRIDE POINT */
     private RelRoot hackSelectStar(SqlNode query, RelRoot root) {
-        /*
-         * Rel tree is like:
-         *
-         *   LogicalSort (optional)
-         *    |- LogicalProject
-         *        |- LogicalFilter (optional)
-         *            |- OLAPTableScan or LogicalJoin
-         */
+        //        /*
+        //         * Rel tree is like:
+        //         *
+        //         *   LogicalSort (optional)
+        //         *    |- LogicalProject
+        //         *        |- LogicalFilter (optional)
+        //         *            |- OLAPTableScan or LogicalJoin
+        //         */
         LogicalProject rootPrj = null;
         LogicalSort rootSort = null;
         if (root.rel instanceof LogicalProject) {
@@ -614,16 +614,16 @@ public class SqlToRelConverter {
         } else {
             return root;
         }
-
+        //
         RelNode input = rootPrj.getInput();
-        if (!(//
-                isAmong(input, "OLAPTableScan", "LogicalJoin")//
-                || (isAmong(input, "LogicalFilter") && isAmong(input.getInput(0), "OLAPTableScan", "LogicalJoin"))//
-        ))
-            return root;
-
-        if (rootPrj.getRowType().getFieldCount() < input.getRowType().getFieldCount())
-            return root;
+        //        if (!(//
+        //                isAmong(input, "OLAPTableScan", "LogicalJoin")//
+        //                || (isAmong(input, "LogicalFilter") && isAmong(input.getInput(0), "OLAPTableScan", "LogicalJoin"))//
+        //             ))
+        //            return root;
+        //
+        //        if (rootPrj.getRowType().getFieldCount() < input.getRowType().getFieldCount())
+        //            return root;
 
         RelDataType inType = rootPrj.getRowType();
         List<String> inFields = inType.getFieldNames();
