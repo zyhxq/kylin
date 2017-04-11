@@ -78,12 +78,10 @@ public class OLAPFilterRel extends Filter implements OLAPRel {
     private static class TupleFilterVisitor extends RexVisitorImpl<TupleFilter> {
 
         private final ColumnRowType inputRowType;
-        private final OLAPContext context;
 
-        public TupleFilterVisitor(ColumnRowType inputRowType, OLAPContext context) {
+        public TupleFilterVisitor(ColumnRowType inputRowType) {
             super(true);
             this.inputRowType = inputRowType;
-            this.context = context;
         }
 
         @Override
@@ -228,7 +226,6 @@ public class OLAPFilterRel extends Filter implements OLAPRel {
         @Override
         public TupleFilter visitInputRef(RexInputRef inputRef) {
             TblColRef column = inputRowType.getColumnByIndex(inputRef.getIndex());
-            context.allColumns.add(column);
             ColumnTupleFilter filter = new ColumnTupleFilter(column);
             return filter;
         }
@@ -318,12 +315,13 @@ public class OLAPFilterRel extends Filter implements OLAPRel {
             return;
         }
 
-        TupleFilterVisitor visitor = new TupleFilterVisitor(this.columnRowType, context);
+        TupleFilterVisitor visitor = new TupleFilterVisitor(this.columnRowType);
         context.filter = this.condition.accept(visitor);
         // optimize the filter, the optimization has to be segment-irrelevant
         new FilterOptimizeTransformer().transform(context.filter);
 
         context.filterColumns = collectColumns(context.filter);
+        context.allColumns.addAll(context.filterColumns);
     }
 
     private Set<TblColRef> collectColumns(TupleFilter filter) {
