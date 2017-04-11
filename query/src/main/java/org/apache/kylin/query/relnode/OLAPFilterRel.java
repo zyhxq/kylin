@@ -59,10 +59,11 @@ import org.apache.kylin.metadata.filter.CompareTupleFilter;
 import org.apache.kylin.metadata.filter.ConstantTupleFilter;
 import org.apache.kylin.metadata.filter.DynamicTupleFilter;
 import org.apache.kylin.metadata.filter.ExtractTupleFilter;
+import org.apache.kylin.metadata.filter.FilterOptimizeTransformer;
 import org.apache.kylin.metadata.filter.LogicalTupleFilter;
 import org.apache.kylin.metadata.filter.TupleFilter;
-import org.apache.kylin.metadata.filter.UnsupportedTupleFilter;
 import org.apache.kylin.metadata.filter.TupleFilter.FilterOperatorEnum;
+import org.apache.kylin.metadata.filter.UnsupportedTupleFilter;
 import org.apache.kylin.metadata.filter.function.Functions;
 import org.apache.kylin.metadata.model.TblColRef;
 
@@ -319,6 +320,8 @@ public class OLAPFilterRel extends Filter implements OLAPRel {
 
         TupleFilterVisitor visitor = new TupleFilterVisitor(this.columnRowType, context);
         context.filter = this.condition.accept(visitor);
+        // optimize the filter, the optimization has to be segment-irrelevant
+        new FilterOptimizeTransformer().transform(context.filter);
 
         context.filterColumns = collectColumns(context.filter);
     }

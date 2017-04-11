@@ -132,8 +132,6 @@ public abstract class GTCubeStorageQueryBase implements IStorageQuery {
                 logger.info("Skip cube segment {} because its input record is 0", cubeSeg);
                 continue;
             }
-            // optimize the filter, the optimization has to be segment-irrelevant
-            new FilterOptimizeTransformer().transform(filterD);
 
             scanner = new CubeSegmentScanner(cubeSeg, cuboid, dimensionsD, groupsD, metrics, filterD, context);
             scanners.add(scanner);
