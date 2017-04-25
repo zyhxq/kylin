@@ -25,8 +25,12 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.HBaseConfiguration;
-import org.apache.hadoop.hbase.client.HTable;
-import org.apache.hadoop.hbase.mapreduce.HFileOutputFormat;
+import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.client.Connection;
+import org.apache.hadoop.hbase.client.ConnectionFactory;
+import org.apache.hadoop.hbase.client.RegionLocator;
+import org.apache.hadoop.hbase.client.Table;
+import org.apache.hadoop.hbase.mapreduce.HFileOutputFormat2;
 import org.apache.hadoop.hbase.mapreduce.KeyValueSortReducer;
 import org.apache.hadoop.hdfs.DFSConfigKeys;
 import org.apache.hadoop.io.SequenceFile;
@@ -56,6 +60,7 @@ public class CubeHFileJob extends AbstractHadoopJob {
     public int run(String[] args) throws Exception {
         Options options = new Options();
 
+        Connection connection = null;
         try {
             options.addOption(OPTION_JOB_NAME);
             options.addOption(OPTION_CUBE_NAME);
@@ -92,10 +97,13 @@ public class CubeHFileJob extends AbstractHadoopJob {
             attachCubeMetadata(cube, job.getConfiguration());
 
             Configuration hbaseConf = HBaseConfiguration.create(getConf());
-            HTable htable = new HTable(hbaseConf, getOptionValue(OPTION_HTABLE_NAME).toUpperCase());
 
+            String hTableName = getOptionValue(OPTION_HTABLE_NAME).toUpperCase();
+            connection = ConnectionFactory.createConnection(hbaseConf);
+            Table table = connection.getTable(TableName.valueOf(hTableName));
+            RegionLocator regionLocator = connection.getRegionLocator(TableName.valueOf(hTableName));
             // Automatic config !
-            HFileOutputFormat.configureIncrementalLoad(job, htable);
+            HFileOutputFormat2.configureIncrementalLoad(job, table, regionLocator);
             reconfigurePartitions(hbaseConf, partitionFilePath);
 
             // set block replication to 3 for hfiles
@@ -107,6 +115,8 @@ public class CubeHFileJob extends AbstractHadoopJob {
         } finally {
             if (job != null)
                 cleanupTempConfFile(job.getConfiguration());
+            if (null != connection)
+                connection.close();
         }
     }
 

@@ -41,7 +41,10 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.HTableDescriptor;
-import org.apache.hadoop.hbase.client.HBaseAdmin;
+import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.client.Admin;
+import org.apache.hadoop.hbase.client.Connection;
+import org.apache.hadoop.hbase.client.ConnectionFactory;
 import org.apache.kylin.common.KylinConfig;
 import org.apache.kylin.common.util.AbstractApplication;
 import org.apache.kylin.common.util.CliCommandExecutor;
@@ -82,7 +85,8 @@ public class StorageCleanupJob extends AbstractApplication {
     private void cleanUnusedHBaseTables(Configuration conf) throws IOException {
         CubeManager cubeMgr = CubeManager.getInstance(KylinConfig.getInstanceFromEnv());
         // get all kylin hbase tables
-        try (HBaseAdmin hbaseAdmin = new HBaseAdmin(conf)) {
+        Connection connection = ConnectionFactory.createConnection(conf);
+        try (Admin hbaseAdmin = connection.getAdmin()) {
             String tableNamePrefix = IRealizationConstants.SharedHbaseStorageLocationPrefix;
             HTableDescriptor[] tableDescriptors = hbaseAdmin.listTables(tableNamePrefix + ".*");
             List<String> allTablesNeedToBeDropped = new ArrayList<String>();
@@ -129,6 +133,8 @@ public class StorageCleanupJob extends AbstractApplication {
                 }
                 System.out.println("----------------------------------------------------");
             }
+        } finally {
+            connection.close();
         }
     }
 
@@ -157,12 +163,12 @@ public class StorageCleanupJob extends AbstractApplication {
     }
 
     class DeleteHTableRunnable implements Callable {
-        HBaseAdmin hbaseAdmin;
-        String htableName;
+        Admin hbaseAdmin;
+        TableName htableName;
 
-        DeleteHTableRunnable(HBaseAdmin hbaseAdmin, String htableName) {
+        DeleteHTableRunnable(Admin hbaseAdmin, String htableName) {
             this.hbaseAdmin = hbaseAdmin;
-            this.htableName = htableName;
+            this.htableName = TableName.valueOf(htableName);
         }
 
         public Object call() throws Exception {

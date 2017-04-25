@@ -17,6 +17,15 @@
 */
 package org.apache.kylin.engine.spark;
 
+import java.io.File;
+import java.io.FileFilter;
+import java.io.Serializable;
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.OptionBuilder;
 import org.apache.commons.cli.Options;
@@ -65,16 +74,8 @@ import org.apache.spark.sql.hive.HiveContext;
 import org.apache.spark.storage.StorageLevel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import scala.Tuple2;
-
-import java.io.File;
-import java.io.FileFilter;
-import java.io.Serializable;
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-
 
 /**
  * Spark application to build cube with the "by-layer" algorithm. Only support source data from Hive; Metadata in HBase.
@@ -354,7 +355,7 @@ public class SparkCubingByLayer extends AbstractApplication implements Serializa
         }
 
         @Override
-        public Iterable<Tuple2<ByteArray, Object[]>> call(Tuple2<ByteArray, Object[]> tuple2) throws Exception {
+        public Iterator<Tuple2<ByteArray, Object[]>> call(Tuple2<ByteArray, Object[]> tuple2) throws Exception {
             if (initialized == false) {
                 prepare();
                 initialized = true;
@@ -368,7 +369,7 @@ public class SparkCubingByLayer extends AbstractApplication implements Serializa
 
             // if still empty or null
             if (myChildren == null || myChildren.size() == 0) {
-                return EMTPY_ITERATOR;
+                return EMTPY_ITERATOR.iterator();
             }
 
             List<Tuple2<ByteArray, Object[]>> tuples = new ArrayList(myChildren.size());
@@ -382,7 +383,7 @@ public class SparkCubingByLayer extends AbstractApplication implements Serializa
                 tuples.add(new Tuple2<>(new ByteArray(newKey), tuple2._2()));
             }
 
-            return tuples;
+            return tuples.iterator();
         }
     }
 

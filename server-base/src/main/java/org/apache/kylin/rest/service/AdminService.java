@@ -18,12 +18,6 @@
 
 package org.apache.kylin.rest.service;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.util.Map;
-import java.util.Properties;
-import java.util.TreeMap;
-
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.PropertiesConfiguration;
 import org.apache.kylin.common.KylinConfig;
@@ -35,6 +29,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Component;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.util.Map;
+import java.util.Properties;
+import java.util.TreeMap;
 
 /**
  * @author jianliu

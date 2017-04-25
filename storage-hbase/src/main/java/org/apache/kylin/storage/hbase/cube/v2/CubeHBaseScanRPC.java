@@ -181,7 +181,7 @@ public class CubeHBaseScanRPC extends CubeHBaseRPC {
             public List<Cell> next() {
                 List<Cell> result = allResultsIterator.next().listCells();
                 for (Cell cell : result) {
-                    scannedBytes += CellUtil.estimatedSizeOf(cell);
+                    scannedBytes += CellUtil.estimatedSerializedSizeOf(cell);
                 }
                 scannedRows++;
                 return result;

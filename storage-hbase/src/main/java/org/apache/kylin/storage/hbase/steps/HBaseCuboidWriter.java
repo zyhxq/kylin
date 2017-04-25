@@ -103,7 +103,7 @@ public class HBaseCuboidWriter implements ICuboidWriter {
             byte[] family = copy(keyValue.getFamilyArray(), keyValue.getFamilyOffset(), keyValue.getFamilyLength());
             byte[] qualifier = copy(keyValue.getQualifierArray(), keyValue.getQualifierOffset(), keyValue.getQualifierLength());
             byte[] value = copy(keyValue.getValueArray(), keyValue.getValueOffset(), keyValue.getValueLength());
-            put.add(family, qualifier, value);
+            put.addColumn(family, qualifier, value);
             puts.add(put);
         }
         if (puts.size() >= BATCH_PUT_THRESHOLD) {

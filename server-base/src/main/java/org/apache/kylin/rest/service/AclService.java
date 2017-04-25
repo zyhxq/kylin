@@ -290,7 +290,7 @@ public class AclService implements MutableAclService {
             htable = aclHBaseStorage.getTable(aclTableName);
 
             Delete delete = new Delete(Bytes.toBytes(String.valueOf(acl.getObjectIdentity().getIdentifier())));
-            delete.deleteFamily(Bytes.toBytes(AclHBaseStorage.ACL_ACES_FAMILY));
+            delete.addFamily(Bytes.toBytes(AclHBaseStorage.ACL_ACES_FAMILY));
             htable.delete(delete);
 
             Put put = new Put(Bytes.toBytes(String.valueOf(acl.getObjectIdentity().getIdentifier())));

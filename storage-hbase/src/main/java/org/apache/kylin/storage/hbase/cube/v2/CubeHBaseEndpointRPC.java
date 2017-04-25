@@ -30,7 +30,7 @@ import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.client.coprocessor.Batch;
-import org.apache.hadoop.hbase.ipc.BlockingRpcCallback;
+import org.apache.hadoop.hbase.ipc.CoprocessorRpcUtils;
 import org.apache.hadoop.hbase.ipc.ServerRpcController;
 import org.apache.kylin.common.KylinConfig;
 import org.apache.kylin.common.exceptions.KylinTimeoutException;
@@ -183,7 +183,7 @@ public class CubeHBaseEndpointRPC extends CubeHBaseRPC {
                                 new Batch.Call<CubeVisitService, CubeVisitResponse>() {
                                     public CubeVisitResponse call(CubeVisitService rowsService) throws IOException {
                                         ServerRpcController controller = new ServerRpcController();
-                                        BlockingRpcCallback<CubeVisitResponse> rpcCallback = new BlockingRpcCallback<>();
+                                        CoprocessorRpcUtils.BlockingRpcCallback<CubeVisitResponse> rpcCallback = new CoprocessorRpcUtils.BlockingRpcCallback<>();
                                         rowsService.visitCube(controller, request, rpcCallback);
                                         CubeVisitResponse response = rpcCallback.get();
                                         if (controller.failedOnException()) {

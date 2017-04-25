@@ -41,9 +41,11 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.FsShell;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.KeyValue;
-import org.apache.hadoop.hbase.client.HTable;
+import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.client.Connection;
+import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
-import org.apache.hadoop.hbase.mapreduce.HFileOutputFormat;
+import org.apache.hadoop.hbase.mapreduce.HFileOutputFormat2;
 import org.apache.hadoop.hbase.mapreduce.LoadIncrementalHFiles;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.util.ToolRunner;
@@ -367,7 +369,7 @@ public class SparkCubing extends AbstractApplication {
         final JavaPairRDD<byte[], byte[]> javaPairRDD = javaRDD.glom().mapPartitionsToPair(new PairFlatMapFunction<Iterator<List<List<String>>>, byte[], byte[]>() {
 
             @Override
-            public Iterable<Tuple2<byte[], byte[]>> call(Iterator<List<List<String>>> listIterator) throws Exception {
+            public Iterator<Tuple2<byte[], byte[]>> call(Iterator<List<List<String>>> listIterator) throws Exception {
                 long t = System.currentTimeMillis();
                 prepare();
 
@@ -390,7 +392,7 @@ public class SparkCubing extends AbstractApplication {
                     throw new RuntimeException(e);
                 }
                 System.out.println("build partition cost: " + (System.currentTimeMillis() - t) + "ms");
-                return sparkCuboidWriter.getResult();
+                return sparkCuboidWriter.getResult().iterator();
             }
         });
 
@@ -430,8 +432,8 @@ public class SparkCubing extends AbstractApplication {
             }
         }, UnsignedBytes.lexicographicalComparator()).mapPartitions(new FlatMapFunction<Iterator<Tuple2<byte[], byte[]>>, Tuple2<byte[], byte[]>>() {
             @Override
-            public Iterable<Tuple2<byte[], byte[]>> call(final Iterator<Tuple2<byte[], byte[]>> tuple2Iterator) throws Exception {
-                return new Iterable<Tuple2<byte[], byte[]>>() {
+            public Iterator<Tuple2<byte[], byte[]>> call(final Iterator<Tuple2<byte[], byte[]>> tuple2Iterator) throws Exception {
+                Iterable<Tuple2<byte[], byte[]>> iterable = new Iterable<Tuple2<byte[], byte[]>>() {
                     final BufferedMeasureCodec codec = new BufferedMeasureCodec(dataTypes);
                     final Object[] input = new Object[measureSize];
                     final Object[] result = new Object[measureSize];
@@ -459,6 +461,7 @@ public class SparkCubing extends AbstractApplication {
                         });
                     }
                 };
+                return iterable.iterator();
             }
         }, true).mapToPair(new PairFunction<Tuple2<byte[], byte[]>, ImmutableBytesWritable, KeyValue>() {
             @Override
@@ -467,7 +470,7 @@ public class SparkCubing extends AbstractApplication {
                 KeyValue value = new KeyValue(tuple2._1(), "F1".getBytes(), "M".getBytes(), tuple2._2());
                 return new Tuple2(key, value);
             }
-        }).saveAsNewAPIHadoopFile(hFileLocation, ImmutableBytesWritable.class, KeyValue.class, HFileOutputFormat.class, conf);
+        }).saveAsNewAPIHadoopFile(hFileLocation, ImmutableBytesWritable.class, KeyValue.class, HFileOutputFormat2.class, conf);
     }
 
     public static void prepare() throws Exception {
@@ -496,8 +499,9 @@ public class SparkCubing extends AbstractApplication {
         Job job = Job.getInstance(conf);
         job.setMapOutputKeyClass(ImmutableBytesWritable.class);
         job.setMapOutputValueClass(KeyValue.class);
-        HTable table = new HTable(conf, hTableName);
-        HFileOutputFormat.configureIncrementalLoad(job, table);
+        Connection connection = HBaseConnection.get();
+        Table table = connection.getTable(TableName.valueOf(hTableName));
+        HFileOutputFormat2.configureIncrementalLoad(job, table, connection.getRegionLocator(TableName.valueOf(hTableName)));
         return conf;
     }
 

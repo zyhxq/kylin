@@ -21,25 +21,31 @@ package org.apache.kylin.engine.mr.common;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.nio.charset.Charset;
+import java.security.KeyManagementException;
 import java.security.Principal;
+import java.security.SecureRandom;
+import java.security.cert.X509Certificate;
 
-import org.apache.commons.httpclient.Header;
-import org.apache.commons.httpclient.HttpClient;
-import org.apache.commons.httpclient.HttpMethod;
-import org.apache.commons.httpclient.methods.GetMethod;
-import org.apache.commons.httpclient.protocol.Protocol;
-import org.apache.commons.httpclient.protocol.ProtocolSocketFactory;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
+
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.hadoop.yarn.api.records.FinalApplicationStatus;
 import org.apache.hadoop.yarn.server.resourcemanager.rmapp.RMAppState;
+import org.apache.http.Header;
 import org.apache.http.HttpResponse;
 import org.apache.http.auth.AuthSchemeRegistry;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.Credentials;
+import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.params.AuthPolicy;
+import org.apache.http.conn.ClientConnectionManager;
+import org.apache.http.conn.scheme.Scheme;
+import org.apache.http.conn.scheme.SchemeRegistry;
+import org.apache.http.conn.ssl.SSLSocketFactory;
 import org.apache.http.impl.auth.SPNegoSchemeFactory;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.DefaultHttpClient;
@@ -107,7 +113,7 @@ public class HadoopStatusGetter {
         String response = null;
         while (response == null) {
             if (url.startsWith("https://")) {
-                registerEasyHttps();
+                registerEasyHttps(client);
             }
             if (url.contains("anonymous=true") == false) {
                 url += url.contains("?") ? "&" : "?";
@@ -162,26 +168,26 @@ public class HadoopStatusGetter {
     }
 
     private String getHttpResponse(String url) throws IOException {
-        HttpClient client = new HttpClient();
+        HttpClient client = new DefaultHttpClient();
 
         String response = null;
         while (response == null) { // follow redirects via 'refresh'
             if (url.startsWith("https://")) {
-                registerEasyHttps();
+                registerEasyHttps(client);
             }
             if (url.contains("anonymous=true") == false) {
                 url += url.contains("?") ? "&" : "?";
                 url += "anonymous=true";
             }
 
-            HttpMethod get = new GetMethod(url);
-            get.addRequestHeader("accept", "application/json");
+            HttpGet get = new HttpGet(url);
+            get.addHeader("accept", "application/json");
 
             try {
-                client.executeMethod(get);
+                HttpResponse res = client.execute(get);
 
                 String redirect = null;
-                Header h = get.getResponseHeader("Location");
+                Header h = res.getFirstHeader("Location");
                 if (h != null) {
                     redirect = h.getValue();
                     if (isValidURL(redirect) == false) {
@@ -190,7 +196,7 @@ public class HadoopStatusGetter {
                         continue;
                     }
                 } else {
-                    h = get.getResponseHeader("Refresh");
+                    h = res.getFirstHeader("Refresh");
                     if (h != null) {
                         String s = h.getValue();
                         int cut = s.indexOf("url=");
@@ -207,7 +213,7 @@ public class HadoopStatusGetter {
                 }
 
                 if (redirect == null) {
-                    response = get.getResponseBodyAsString();
+                    response = res.getStatusLine().toString();
                     logger.debug("Job " + mrJobId + " get status check result.\n");
                 } else {
                     url = redirect;
@@ -224,13 +230,35 @@ public class HadoopStatusGetter {
         return response;
     }
 
-    private static Protocol EASY_HTTPS = null;
+    private static void registerEasyHttps(HttpClient client) {
+        SSLContext sslContext;
+        try {
+            sslContext = SSLContext.getInstance("SSL");
 
-    private static void registerEasyHttps() {
-        // by pass all https issue
-        if (EASY_HTTPS == null) {
-            EASY_HTTPS = new Protocol("https", (ProtocolSocketFactory) new DefaultSslProtocolSocketFactory(), 443);
-            Protocol.registerProtocol("https", EASY_HTTPS);
+            // set up a TrustManager that trusts everything
+            try {
+                sslContext.init(null, new TrustManager[] { new DefaultX509TrustManager(null) {
+                    public X509Certificate[] getAcceptedIssuers() {
+                        logger.debug("getAcceptedIssuers");
+                        return null;
+                    }
+
+                    public void checkClientTrusted(X509Certificate[] certs, String authType) {
+                        logger.debug("checkClientTrusted");
+                    }
+
+                    public void checkServerTrusted(X509Certificate[] certs, String authType) {
+                        logger.debug("checkServerTrusted");
+                    }
+                } }, new SecureRandom());
+            } catch (KeyManagementException e) {
+            }
+            SSLSocketFactory ssf = new SSLSocketFactory(sslContext, SSLSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER);
+            ClientConnectionManager ccm = client.getConnectionManager();
+            SchemeRegistry sr = ccm.getSchemeRegistry();
+            sr.register(new Scheme("https", 443, ssf));
+        } catch (Exception e) {
+            logger.error(e.getMessage(), e);
         }
     }
 

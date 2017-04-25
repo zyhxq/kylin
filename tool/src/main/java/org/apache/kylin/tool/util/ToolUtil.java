@@ -29,7 +29,9 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableName;
-import org.apache.hadoop.hbase.client.HBaseAdmin;
+import org.apache.hadoop.hbase.client.Admin;
+import org.apache.hadoop.hbase.client.Connection;
+import org.apache.hadoop.hbase.client.ConnectionFactory;
 import org.apache.kylin.common.KylinConfig;
 import org.apache.kylin.common.util.HadoopUtil;
 import org.apache.kylin.storage.hbase.HBaseConnection;
@@ -51,12 +53,15 @@ public class ToolUtil {
     }
 
     public static String getHBaseMetaStoreId() throws IOException {
-        try (final HBaseAdmin hbaseAdmin = new HBaseAdmin(HBaseConfiguration.create(HadoopUtil.getCurrentConfiguration()))) {
+        Connection connection = ConnectionFactory.createConnection(HBaseConfiguration.create(HadoopUtil.getCurrentConfiguration()));
+        try (final Admin hbaseAdmin = connection.getAdmin()) {
             final String metaStoreName = KylinConfig.getInstanceFromEnv().getMetadataUrlPrefix();
             final HTableDescriptor desc = hbaseAdmin.getTableDescriptor(TableName.valueOf(metaStoreName));
             return desc.getValue(HBaseConnection.HTABLE_UUID_TAG);
         } catch (Exception e) {
             return null;
+        } finally {
+            connection.close();
         }
     }
 

@@ -169,6 +169,11 @@
             <artifactId>junit</artifactId>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>commons-configuration</groupId>
+            <artifactId>commons-configuration</artifactId>
+            <scope>provided</scope>
+        </dependency>
     </dependencies>
 
     <repositories>
