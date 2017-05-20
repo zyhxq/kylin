@@ -176,6 +176,8 @@ public class ITZookeeperDistributedLockTest extends HBaseMetadataTestCase {
         for (int i = 0; i < nClients; i++) {
             threads[i].join();
         }
+        
+        Thread.sleep(3000);
 
         // verify counters
         assertEquals(0, lockCounter.get() - unlockCounter.get());
