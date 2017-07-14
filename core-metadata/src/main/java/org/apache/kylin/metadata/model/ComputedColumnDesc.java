@@ -20,7 +20,6 @@ package org.apache.kylin.metadata.model;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Preconditions;
-import org.apache.kylin.metadata.model.tool.CalciteParser;
 
 import java.io.Serializable;
 
@@ -46,7 +45,7 @@ public class ComputedColumnDesc implements Serializable {
         tableIdentity = tableIdentity.toUpperCase();
         columnName = columnName.toUpperCase();
 
-        CalciteParser.ensureNoTableNameExists(expression);
+        //CalciteParser.ensureNoTableNameExists(expression);
     }
 
     public String getFullName() {
