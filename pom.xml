@@ -68,6 +68,9 @@
         <calcite.version>1.12.0-kylin-r2</calcite.version>
         <avatica.version>1.9.0</avatica.version>
 
+        <!-- Dropwizard Metrics Version -->
+        <dropwizard.metrics.version>3.1.2</dropwizard.metrics.version>
+
         <!-- Hadoop Common deps, keep compatible with hadoop2.version -->
         <zookeeper.version>3.4.8</zookeeper.version>
         <curator.version>2.7.1</curator.version>
@@ -1124,6 +1127,9 @@
         <module>tool-assembly</module>
         <module>kylin-it</module>
         <module>tomcat-ext</module>
+        <module>core-metrics</module>
+        <module>metrics-reporter-hive</module>
+        <module>metrics-reporter-kafka</module>
     </modules>
 
     <reporting>

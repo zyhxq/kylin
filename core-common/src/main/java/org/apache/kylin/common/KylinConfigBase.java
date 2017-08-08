@@ -1120,4 +1120,12 @@ abstract public class KylinConfigBase implements Serializable {
     public boolean isWebCrossDomainEnabled() {
         return Boolean.parseBoolean(getOptional("kylin.web.cross-domain-enabled", "true"));
     }
+
+    // ============================================================================
+    // Metrics
+    // ============================================================================
+    public String getMetricsActiveReservoirDefaultClass() {
+        return getOptional("kylin.core.metrics.active-reservoir-default-class",
+                "org.apache.kylin.metrics.lib.impl.StubReservoir");
+    }
 }
