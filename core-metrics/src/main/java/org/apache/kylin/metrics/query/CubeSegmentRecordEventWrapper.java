@@ -36,10 +36,10 @@ public class CubeSegmentRecordEventWrapper extends RecordEventWrapper {
         this.metricsEvent.put(PropertyEnum.TIME_SUM.toString(), 0L);
         this.metricsEvent.put(PropertyEnum.TIME_MAX.toString(), 0L);
         this.metricsEvent.put(PropertyEnum.SKIP_COUNT.toString(), 0L);
-        this.metricsEvent.put(PropertyEnum.SCAN_SIZE.toString(), 0L);
-        this.metricsEvent.put(PropertyEnum.RETURN_SIZE.toString(), 0L);
-        this.metricsEvent.put(PropertyEnum.AGGR_FILTER_SIZE.toString(), 0L);
-        this.metricsEvent.put(PropertyEnum.AGGR_SIZE.toString(), 0L);
+        this.metricsEvent.put(PropertyEnum.SCAN_COUNT.toString(), 0L);
+        this.metricsEvent.put(PropertyEnum.RETURN_COUNT.toString(), 0L);
+        this.metricsEvent.put(PropertyEnum.AGGR_FILTER_COUNT.toString(), 0L);
+        this.metricsEvent.put(PropertyEnum.AGGR_COUNT.toString(), 0L);
         this.metricsEvent.put(PropertyEnum.IF_SUCCESS.toString(), true);
     }
 
@@ -58,16 +58,16 @@ public class CubeSegmentRecordEventWrapper extends RecordEventWrapper {
         this.metricsEvent.put(PropertyEnum.WEIGHT_PER_HIT.toString(), weightPerHit);
     }
 
-    public void addRPCStats(long callTimeMs, long skipCount, long scanSize, long returnSize, long aggrSize,
+    public void addRPCStats(long callTimeMs, long skipCount, long scanCount, long returnCount, long aggrCount,
             boolean ifSuccess) {
         Long curCallCount = (Long) this.metricsEvent.get(PropertyEnum.CALL_COUNT.toString());
         Long curTimeSum = (Long) this.metricsEvent.get(PropertyEnum.TIME_SUM.toString());
         Long curTimeMax = (Long) this.metricsEvent.get(PropertyEnum.TIME_MAX.toString());
         Long curSkipCount = (Long) this.metricsEvent.get(PropertyEnum.SKIP_COUNT.toString());
-        Long curScanSize = (Long) this.metricsEvent.get(PropertyEnum.SCAN_SIZE.toString());
-        Long curReturnSize = (Long) this.metricsEvent.get(PropertyEnum.RETURN_SIZE.toString());
-        Long curAggrAndFilterSize = (Long) this.metricsEvent.get(PropertyEnum.AGGR_FILTER_SIZE.toString());
-        Long curAggrSize = (Long) this.metricsEvent.get(PropertyEnum.AGGR_SIZE.toString());
+        Long curScanCount = (Long) this.metricsEvent.get(PropertyEnum.SCAN_COUNT.toString());
+        Long curReturnCount = (Long) this.metricsEvent.get(PropertyEnum.RETURN_COUNT.toString());
+        Long curAggrAndFilterCount = (Long) this.metricsEvent.get(PropertyEnum.AGGR_FILTER_COUNT.toString());
+        Long curAggrCount = (Long) this.metricsEvent.get(PropertyEnum.AGGR_COUNT.toString());
         Boolean curIfSuccess = (Boolean) this.metricsEvent.get(PropertyEnum.IF_SUCCESS.toString());
 
         this.metricsEvent.put(PropertyEnum.CALL_COUNT.toString(), curCallCount + 1);
@@ -76,10 +76,11 @@ public class CubeSegmentRecordEventWrapper extends RecordEventWrapper {
             this.metricsEvent.put(PropertyEnum.TIME_MAX.toString(), callTimeMs);
         }
         this.metricsEvent.put(PropertyEnum.SKIP_COUNT.toString(), curSkipCount + skipCount);
-        this.metricsEvent.put(PropertyEnum.SCAN_SIZE.toString(), curScanSize + scanSize);
-        this.metricsEvent.put(PropertyEnum.RETURN_SIZE.toString(), curReturnSize + returnSize);
-        this.metricsEvent.put(PropertyEnum.AGGR_FILTER_SIZE.toString(), curAggrAndFilterSize + scanSize - returnSize);
-        this.metricsEvent.put(PropertyEnum.AGGR_SIZE.toString(), curAggrSize + aggrSize);
+        this.metricsEvent.put(PropertyEnum.SCAN_COUNT.toString(), curScanCount + scanCount);
+        this.metricsEvent.put(PropertyEnum.RETURN_COUNT.toString(), curReturnCount + returnCount);
+        this.metricsEvent.put(PropertyEnum.AGGR_FILTER_COUNT.toString(),
+                curAggrAndFilterCount + scanCount - returnCount);
+        this.metricsEvent.put(PropertyEnum.AGGR_COUNT.toString(), curAggrCount + aggrCount);
         this.metricsEvent.put(PropertyEnum.IF_SUCCESS.toString(), curIfSuccess && ifSuccess);
     }
 
@@ -91,9 +92,9 @@ public class CubeSegmentRecordEventWrapper extends RecordEventWrapper {
         PROJECT("PROJECT"), CUBE("CUBE_NAME"), SEGMENT("SEGMENT_NAME"), CUBOID_SOURCE("CUBOID_SOURCE"), CUBOID_TARGET(
                 "CUBOID_TARGET"), IF_MATCH("IF_MATCH"), FILTER_MASK("FILTER_MASK"), IF_SUCCESS("IF_SUCCESS"), //
         TIME_SUM("STORAGE_CALL_TIME_SUM"), TIME_MAX("STORAGE_CALL_TIME_MAX"), WEIGHT_PER_HIT(
-                "WEIGHT_PER_HIT"), CALL_COUNT("STORAGE_CALL_COUNT"), SKIP_COUNT("STORAGE_COUNT_SKIP"), SCAN_SIZE(
-                        "STORAGE_SIZE_SCAN"), RETURN_SIZE("STORAGE_SIZE_RETURN"), AGGR_FILTER_SIZE(
-                                "STORAGE_SIZE_AGGREGATE_FILTER"), AGGR_SIZE("STORAGE_SIZE_AGGREGATE");
+                "WEIGHT_PER_HIT"), CALL_COUNT("STORAGE_CALL_COUNT"), SKIP_COUNT("STORAGE_COUNT_SKIP"), SCAN_COUNT(
+                        "STORAGE_COUNT_SCAN"), RETURN_COUNT("STORAGE_COUNT_RETURN"), AGGR_FILTER_COUNT(
+                                "STORAGE_COUNT_AGGREGATE_FILTER"), AGGR_COUNT("STORAGE_COUNT_AGGREGATE");
 
         private final String propertyName;
 

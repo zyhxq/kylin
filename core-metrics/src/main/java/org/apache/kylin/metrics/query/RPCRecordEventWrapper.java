@@ -36,13 +36,13 @@ public class RPCRecordEventWrapper extends RecordEventWrapper {
         this.metricsEvent.put(PropertyEnum.RPC_SERVER.toString(), rpcServer);
     }
 
-    public void setRPCCallStats(long callTimeMs, long skipCount, long scanSize, long returnSize, long aggrSize) {
+    public void setRPCCallStats(long callTimeMs, long skipCount, long scanCount, long returnCount, long aggrCount) {
         this.metricsEvent.put(PropertyEnum.CALL_TIME.toString(), callTimeMs);
         this.metricsEvent.put(PropertyEnum.SKIP_COUNT.toString(), skipCount); //Number of skips on region servers based on region meta or fuzzy filter
-        this.metricsEvent.put(PropertyEnum.SCAN_SIZE.toString(), scanSize); //Size scanned by region server
-        this.metricsEvent.put(PropertyEnum.RETURN_SIZE.toString(), returnSize);//Size returned by region server
-        this.metricsEvent.put(PropertyEnum.AGGR_FILTER_SIZE.toString(), scanSize - returnSize); //Size filtered and aggregated by coprocessor
-        this.metricsEvent.put(PropertyEnum.AGGR_SIZE.toString(), aggrSize); //Size aggregated by coprocessor
+        this.metricsEvent.put(PropertyEnum.SCAN_COUNT.toString(), scanCount); //Count scanned by region server
+        this.metricsEvent.put(PropertyEnum.RETURN_COUNT.toString(), returnCount);//Count returned by region server
+        this.metricsEvent.put(PropertyEnum.AGGR_FILTER_COUNT.toString(), scanCount - returnCount); //Count filtered & aggregated by coprocessor
+        this.metricsEvent.put(PropertyEnum.AGGR_COUNT.toString(), aggrCount); //Count aggregated by coprocessor
     }
 
     public <T extends Throwable> void setStats(Class<T> exceptionClassName) {
@@ -51,8 +51,8 @@ public class RPCRecordEventWrapper extends RecordEventWrapper {
 
     public enum PropertyEnum {
         PROJECT("PROJECT"), REALIZATION("REALIZATION"), RPC_SERVER("RPC_SERVER"), EXCEPTION("EXCEPTION"), //
-        CALL_TIME("CALL_TIME"), SKIP_COUNT("COUNT_SKIP"), SCAN_SIZE("SIZE_SCAN"), RETURN_SIZE(
-                "SIZE_RETURN"), AGGR_FILTER_SIZE("SIZE_AGGREGATE_FILTER"), AGGR_SIZE("SIZE_AGGREGATE");
+        CALL_TIME("CALL_TIME"), SKIP_COUNT("COUNT_SKIP"), SCAN_COUNT("COUNT_SCAN"), RETURN_COUNT(
+                "COUNT_RETURN"), AGGR_FILTER_COUNT("COUNT_AGGREGATE_FILTER"), AGGR_COUNT("COUNT_AGGREGATE");
 
         private final String propertyName;
 

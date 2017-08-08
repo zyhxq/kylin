@@ -33,8 +33,8 @@ public class QueryRecordEventWrapper extends RecordEventWrapper {
     private void initStats() {
         this.metricsEvent.put(PropertyEnum.EXCEPTION.toString(), "NULL");
         this.metricsEvent.put(PropertyEnum.TIME_COST.toString(), 0L);
-        this.metricsEvent.put(PropertyEnum.CALCITE_RETURN_SIZE.toString(), 0L);
-        this.metricsEvent.put(PropertyEnum.STORAGE_RETURN_SIZE.toString(), 0L);
+        this.metricsEvent.put(PropertyEnum.CALCITE_RETURN_COUNT.toString(), 0L);
+        this.metricsEvent.put(PropertyEnum.STORAGE_RETURN_COUNT.toString(), 0L);
         setDependentStats();
     }
 
@@ -47,22 +47,22 @@ public class QueryRecordEventWrapper extends RecordEventWrapper {
         this.metricsEvent.put(PropertyEnum.REALIZATION_TYPE.toString(), realizationType);
     }
 
-    public void addStorageStats(long addReturnSizeByStorage) {
-        Long curReturnSizeByStorage = (Long) this.metricsEvent.get(PropertyEnum.STORAGE_RETURN_SIZE.toString());
-        this.metricsEvent.put(PropertyEnum.STORAGE_RETURN_SIZE.toString(),
-                curReturnSizeByStorage + addReturnSizeByStorage);
+    public void addStorageStats(long addReturnCountByStorage) {
+        Long curReturnCountByStorage = (Long) this.metricsEvent.get(PropertyEnum.STORAGE_RETURN_COUNT.toString());
+        this.metricsEvent.put(PropertyEnum.STORAGE_RETURN_COUNT.toString(),
+                curReturnCountByStorage + addReturnCountByStorage);
     }
 
-    public void setStats(long callTimeMs, long returnSizeByCalcite) {
+    public void setStats(long callTimeMs, long returnCountByCalcite) {
         this.metricsEvent.put(PropertyEnum.TIME_COST.toString(), callTimeMs);
-        this.metricsEvent.put(PropertyEnum.CALCITE_RETURN_SIZE.toString(), returnSizeByCalcite);
+        this.metricsEvent.put(PropertyEnum.CALCITE_RETURN_COUNT.toString(), returnCountByCalcite);
         setDependentStats();
     }
 
     private void setDependentStats() {
-        this.metricsEvent.put(PropertyEnum.AGGR_FILTER_SIZE.toString(),
-                Math.max(0L, (Long) this.metricsEvent.get(PropertyEnum.STORAGE_RETURN_SIZE.toString())
-                        - (Long) this.metricsEvent.get(PropertyEnum.CALCITE_RETURN_SIZE.toString())));
+        this.metricsEvent.put(PropertyEnum.AGGR_FILTER_COUNT.toString(),
+                Math.max(0L, (Long) this.metricsEvent.get(PropertyEnum.STORAGE_RETURN_COUNT.toString())
+                        - (Long) this.metricsEvent.get(PropertyEnum.CALCITE_RETURN_COUNT.toString())));
     }
 
     public <T extends Throwable> void setStats(Class<T> exceptionClassName) {
@@ -72,8 +72,8 @@ public class QueryRecordEventWrapper extends RecordEventWrapper {
     public enum PropertyEnum {
         ID_CODE("QUERY_HASH_CODE"), TYPE("QUERY_TYPE"), PROJECT("PROJECT"), REALIZATION(
                 "REALIZATION"), REALIZATION_TYPE("REALIZATION_TYPE"), EXCEPTION("EXCEPTION"), //
-        TIME_COST("QUERY_TIME_COST"), CALCITE_RETURN_SIZE("CALCITE_SIZE_RETURN"), STORAGE_RETURN_SIZE(
-                "STORAGE_SIZE_RETURN"), AGGR_FILTER_SIZE("CALCITE_SIZE_AGGREGATE_FILTER");
+        TIME_COST("QUERY_TIME_COST"), CALCITE_RETURN_COUNT("CALCITE_COUNT_RETURN"), STORAGE_RETURN_COUNT(
+                "STORAGE_COUNT_RETURN"), AGGR_FILTER_COUNT("CALCITE_COUNT_AGGREGATE_FILTER");
 
         private final String propertyName;
 
