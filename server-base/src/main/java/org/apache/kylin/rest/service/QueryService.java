@@ -82,6 +82,7 @@ import org.apache.kylin.metadata.querymeta.TableMetaWithType;
 import org.apache.kylin.metadata.realization.RealizationType;
 import org.apache.kylin.query.QueryConnection;
 import org.apache.kylin.query.relnode.OLAPContext;
+import org.apache.kylin.query.util.PushDownUtil;
 import org.apache.kylin.query.util.QueryUtil;
 import org.apache.kylin.rest.constant.Constant;
 import org.apache.kylin.rest.exception.BadRequestException;
@@ -94,7 +95,6 @@ import org.apache.kylin.rest.request.PrepareSqlRequest;
 import org.apache.kylin.rest.request.SQLRequest;
 import org.apache.kylin.rest.response.SQLResponse;
 import org.apache.kylin.rest.util.AclUtil;
-import org.apache.kylin.query.util.PushDownUtil;
 import org.apache.kylin.rest.util.TableauInterceptor;
 import org.apache.kylin.storage.hybrid.HybridInstance;
 import org.slf4j.Logger;
@@ -422,6 +422,7 @@ public class QueryService extends BasicService {
                 String errMsg = QueryUtil.makeErrorMsgUserFriendly(e);
 
                 sqlResponse = new SQLResponse(null, null, 0, true, errMsg);
+                sqlResponse.setThrowable(e.getCause() == null ? e : ExceptionUtils.getRootCause(e));
                 sqlResponse.setTotalScanCount(queryContext.getScannedRows());
                 sqlResponse.setTotalScanBytes(queryContext.getScannedBytes());
 
@@ -855,6 +856,8 @@ public class QueryService extends BasicService {
         StringBuilder logSb = new StringBuilder("Processed rows for each storageContext: ");
         if (OLAPContext.getThreadLocalContexts() != null) { // contexts can be null in case of 'explain plan for'
             for (OLAPContext ctx : OLAPContext.getThreadLocalContexts()) {
+                String realizationName = "NULL";
+                int realizationType = -1;
                 if (ctx.realization != null) {
                     isPartialResult |= ctx.storageContext.isPartialResultReturned();
                     if (cubeSb.length() > 0) {
@@ -862,7 +865,11 @@ public class QueryService extends BasicService {
                     }
                     cubeSb.append(ctx.realization.getCanonicalName());
                     logSb.append(ctx.storageContext.getProcessedRowCount()).append(" ");
+
+                    realizationName = ctx.realization.getName();
+                    realizationType = ctx.realization.getStorageType();
                 }
+                QueryContext.current().setContextRealization(ctx.id, realizationName, realizationType);
             }
         }
         logger.info(logSb.toString());
@@ -871,6 +878,7 @@ public class QueryService extends BasicService {
                 isPushDown);
         response.setTotalScanCount(QueryContext.current().getScannedRows());
         response.setTotalScanBytes(QueryContext.current().getScannedBytes());
+        response.setQueryStatistics(QueryContext.current().getQueryStatisticsResult());
         return response;
     }
 

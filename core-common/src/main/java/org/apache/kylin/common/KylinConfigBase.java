@@ -1124,17 +1124,39 @@ abstract public class KylinConfigBase implements Serializable {
     // ============================================================================
     // Metrics
     // ============================================================================
-    public boolean isMetricsMonitorEnabled() {
+    public boolean isKylinMetricsMonitorEnabled() {
         return Boolean.parseBoolean(getOptional("kylin.core.metrics.monitor-enabled", "false"));
     }
 
-    public String getMetricsActiveReservoirDefaultClass() {
+    public String getKylinMetricsActiveReservoirDefaultClass() {
         return getOptional("kylin.core.metrics.active-reservoir-default-class",
                 "org.apache.kylin.metrics.lib.impl.StubReservoir");
     }
 
-    public String getSystemCubeSinkDefaultClass() {
+    public String getKylinSystemCubeSinkDefaultClass() {
         return getOptional("kylin.core.metrics.system-cube-sink-default-class",
                 "org.apache.kylin.metrics.lib.impl.hive.HiveSink");
+    }
+
+    public String getKylinMetricsSubjectSuffix() {
+        String suffix = getOptional("kylin.core.metric.subject-suffix", null);
+        if (suffix != null) {
+            return suffix;
+        }
+        return getDeployEnv();
+    }
+
+    public String getKylinMetricsSubjectQuery() {
+        return getOptional("kylin.core.metrics.subject-query", "METRICS_QUERY") + "_" + getKylinMetricsSubjectSuffix();
+    }
+
+    public String getKylinMetricsSubjectQueryCube() {
+        return getOptional("kylin.core.metrics.subject-query-cube", "METRICS_QUERY_CUBE") + "_"
+                + getKylinMetricsSubjectSuffix();
+    }
+
+    public String getKylinMetricsSubjectQueryRpcCall() {
+        return getOptional("kylin.core.metrics.subject-query-rpc", "METRICS_QUERY_RPC") + "_"
+                + getKylinMetricsSubjectSuffix();
     }
 }
