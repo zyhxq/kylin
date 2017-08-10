@@ -53,6 +53,7 @@ import org.apache.kylin.metadata.model.IJoinedFlatTableDesc;
 import org.apache.kylin.metadata.model.ISegment;
 import org.apache.kylin.metadata.model.JoinTableDesc;
 import org.apache.kylin.metadata.model.TableDesc;
+import org.apache.kylin.source.hive.exception.SegmentEmptyException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -318,7 +319,8 @@ public class HiveMRInput implements IMRInput {
                 if (rowCount == 0) {
                     if (!config.isEmptySegmentAllowed()) {
                         stepLogger.log("Detect upstream hive table is empty, " + "fail the job because \"kylin.job.allow-empty-segment\" = \"false\"");
-                        return new ExecuteResult(ExecuteResult.State.ERROR, stepLogger.getBufferedLog());
+                        return new ExecuteResult(ExecuteResult.State.ERROR,
+                                new SegmentEmptyException(stepLogger.getBufferedLog()));
                     } else {
                         return new ExecuteResult(ExecuteResult.State.SUCCEED, "Row count is 0, no need to redistribute");
                     }
@@ -339,7 +341,7 @@ public class HiveMRInput implements IMRInput {
 
             } catch (Exception e) {
                 logger.error("job:" + getId() + " execute finished with exception", e);
-                return new ExecuteResult(ExecuteResult.State.ERROR, stepLogger.getBufferedLog());
+                return new ExecuteResult(e, stepLogger.getBufferedLog());
             }
         }
 
@@ -381,7 +383,7 @@ public class HiveMRInput implements IMRInput {
                 //output.append(cleanUpHiveViewIntermediateTable(config));
             } catch (IOException e) {
                 logger.error("job:" + getId() + " execute finished with exception", e);
-                return new ExecuteResult(ExecuteResult.State.ERROR, e.getMessage());
+                return new ExecuteResult(e, e.getMessage());
             }
 
             return new ExecuteResult(ExecuteResult.State.SUCCEED, output.toString());

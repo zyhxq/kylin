@@ -33,6 +33,7 @@ import org.apache.hadoop.mapreduce.JobStatus;
 import org.apache.kylin.common.util.ClassUtil;
 import org.apache.kylin.common.util.HadoopUtil;
 import org.apache.kylin.engine.mr.MRUtil;
+import org.apache.kylin.engine.mr.exception.MapReduceException;
 import org.apache.kylin.job.constant.ExecutableConstants;
 import org.apache.kylin.job.constant.JobStepStatusEnum;
 import org.apache.kylin.job.exception.ExecuteException;
@@ -131,7 +132,7 @@ public class MapReduceExecutable extends AbstractExecutable {
                     ex.printStackTrace(new PrintWriter(stringWriter));
                     log.append(stringWriter.toString()).append("\n");
                     log.append("result code:").append(2);
-                    return new ExecuteResult(ExecuteResult.State.ERROR, log.toString());
+                    return new ExecuteResult(ex, log.toString());
                 }
                 job = hadoopJob.getJob();
             }
@@ -168,7 +169,7 @@ public class MapReduceExecutable extends AbstractExecutable {
                     if (status == JobStepStatusEnum.FINISHED) {
                         return new ExecuteResult(ExecuteResult.State.SUCCEED, output.toString());
                     } else {
-                        return new ExecuteResult(ExecuteResult.State.FAILED, output.toString());
+                        return new ExecuteResult(ExecuteResult.State.FAILED, new MapReduceException(output.toString()));
                     }
                 }
                 Thread.sleep(context.getConfig().getYarnStatusCheckIntervalSeconds() * 1000L);
@@ -191,10 +192,10 @@ public class MapReduceExecutable extends AbstractExecutable {
 
         } catch (ReflectiveOperationException e) {
             logger.error("error getMapReduceJobClass, class name:" + getParam(KEY_MR_JOB), e);
-            return new ExecuteResult(ExecuteResult.State.ERROR, e.getLocalizedMessage());
+            return new ExecuteResult(e, e.getLocalizedMessage());
         } catch (Exception e) {
             logger.error("error execute " + this.toString(), e);
-            return new ExecuteResult(ExecuteResult.State.ERROR, e.getLocalizedMessage());
+            return new ExecuteResult(e, e.getLocalizedMessage());
         }
     }
 
