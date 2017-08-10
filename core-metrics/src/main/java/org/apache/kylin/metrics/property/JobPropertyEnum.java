@@ -16,7 +16,7 @@
  * limitations under the License.
 */
 
-package org.apache.kylin.metrics.job;
+package org.apache.kylin.metrics.property;
 
 import com.google.common.base.Strings;
 

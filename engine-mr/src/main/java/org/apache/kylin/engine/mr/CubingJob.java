@@ -46,12 +46,12 @@ import org.apache.kylin.job.execution.ExecutableContext;
 import org.apache.kylin.job.execution.ExecutableState;
 import org.apache.kylin.job.execution.ExecuteResult;
 import org.apache.kylin.job.execution.Output;
+import org.apache.kylin.job.metrics.JobMetricsFacade;
 import org.apache.kylin.metadata.project.ProjectInstance;
 import org.apache.kylin.metadata.project.ProjectManager;
 import org.apache.kylin.metrics.MetricsManager;
-import org.apache.kylin.metrics.job.ExceptionRecordEventWrapper;
-import org.apache.kylin.metrics.job.JobRecordEventWrapper;
 import org.apache.kylin.metrics.lib.impl.RecordEvent;
+import org.apache.kylin.metrics.lib.impl.TimedRecordEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -249,37 +249,49 @@ public class CubingJob extends DefaultChainedExecutable {
          * report job related metrics
          */
         if (state == ExecutableState.SUCCEED) {
-            JobRecordEventWrapper jobRecordEventWrapper = new JobRecordEventWrapper(
-                    new RecordEvent(KylinConfig.getInstanceFromEnv().getKylinMetricsSubjectJob()));
-            jobRecordEventWrapper.setWrapper(ProjectInstance.getNormalizedProjectName(getProjectName()),
+            RecordEvent metricsEvent = new TimedRecordEvent(
+                    KylinConfig.getInstanceFromEnv().getKylinMetricsSubjectJob());
+            JobMetricsFacade.setJobWrapper(metricsEvent, //
+                    ProjectInstance.getNormalizedProjectName(getProjectName()),
                     CubingExecutableUtil.getCubeName(getParams()), getId(), getJobType(),
                     getAlgorithm() == null ? "NULL" : getAlgorithm().toString());
+
             long tableSize = findSourceSizeBytes();
             long buildDuration = getDuration();
             long waitResourceTime = getMapReduceWaitTime();
-            jobRecordEventWrapper.setStats(tableSize, findCubeSizeBytes(), buildDuration, waitResourceTime,
+            JobMetricsFacade.setJobStats(metricsEvent, //
+                    tableSize, findCubeSizeBytes(), buildDuration, waitResourceTime,
                     getPerBytesTimeCost(tableSize, buildDuration - waitResourceTime));
+            long dColumnDistinct = 0L;
+            long dDictBuilding = 0L;
+            long dCubingInmem = 0L;
+            long dHfileConvert = 0L;
             if (CubingJobTypeEnum.getByName(getJobType()) == CubingJobTypeEnum.BUILD) {
-                jobRecordEventWrapper.setStepStats(
-                        getTaskByName(ExecutableConstants.STEP_NAME_FACT_DISTINCT_COLUMNS).getDuration(), //
-                        getTaskByName(ExecutableConstants.STEP_NAME_BUILD_DICTIONARY).getDuration(), //
-                        getTaskByName(ExecutableConstants.STEP_NAME_BUILD_IN_MEM_CUBE).getDuration(), //
-                        getTaskByName(ExecutableConstants.STEP_NAME_CONVERT_CUBOID_TO_HFILE).getDuration());
+                dColumnDistinct = getTaskByName(ExecutableConstants.STEP_NAME_FACT_DISTINCT_COLUMNS).getDuration();
+                dDictBuilding = getTaskByName(ExecutableConstants.STEP_NAME_BUILD_DICTIONARY).getDuration();
+                dCubingInmem = getTaskByName(ExecutableConstants.STEP_NAME_BUILD_IN_MEM_CUBE).getDuration();
+                dHfileConvert = getTaskByName(ExecutableConstants.STEP_NAME_CONVERT_CUBOID_TO_HFILE).getDuration();
             }
-            MetricsManager.getInstance().update(jobRecordEventWrapper.getMetricsRecord());
+            JobMetricsFacade.setJobStepStats(metricsEvent, //
+                    dColumnDistinct, dDictBuilding, dCubingInmem, dHfileConvert);
+
+            MetricsManager.getInstance().update(metricsEvent);
         } else if (state == ExecutableState.ERROR) {
-            ExceptionRecordEventWrapper exceptionRecordEventWrapper = new ExceptionRecordEventWrapper(
-                    new RecordEvent(KylinConfig.getInstanceFromEnv().getKylinMetricsSubjectJobException()));
-            exceptionRecordEventWrapper.setWrapper(ProjectInstance.getNormalizedProjectName(getProjectName()),
+            RecordEvent metricsEvent = new TimedRecordEvent(
+                    KylinConfig.getInstanceFromEnv().getKylinMetricsSubjectJobException());
+
+            Class throwable = result.getThrowable() != null ? result.getThrowable().getClass() : Exception.class;
+            JobMetricsFacade.setJobExceptionWrapper(metricsEvent, //
+                    ProjectInstance.getNormalizedProjectName(getProjectName()),
                     CubingExecutableUtil.getCubeName(getParams()), getId(), getJobType(),
-                    getAlgorithm() == null ? "NULL" : getAlgorithm().toString(),
-                    result.getThrowable() != null ? result.getThrowable().getClass() : Exception.class);
-            MetricsManager.getInstance().update(exceptionRecordEventWrapper.getMetricsRecord());
+                    getAlgorithm() == null ? "NULL" : getAlgorithm().toString(), throwable);
+
+            MetricsManager.getInstance().update(metricsEvent);
         }
 
     }
 
-    private double getPerBytesTimeCost(long size, long timeCost) {
+    private static double getPerBytesTimeCost(long size, long timeCost) {
         if (size <= 0) {
             return 0;
         }
