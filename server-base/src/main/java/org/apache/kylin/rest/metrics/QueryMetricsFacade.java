@@ -136,7 +136,7 @@ public class QueryMetricsFacade {
         }
     }
 
-    public static void setRPCWrapper(RecordEvent metricsEvent, String projectName, String realizationName,
+    private static void setRPCWrapper(RecordEvent metricsEvent, String projectName, String realizationName,
             String rpcServer, Throwable throwable) {
         metricsEvent.put(QueryRPCPropertyEnum.PROJECT.toString(), projectName);
         metricsEvent.put(QueryRPCPropertyEnum.REALIZATION.toString(), realizationName);
@@ -145,7 +145,7 @@ public class QueryMetricsFacade {
                 throwable == null ? "NULL" : throwable.getClass().getName());
     }
 
-    public static void setRPCStats(RecordEvent metricsEvent, long callTimeMs, long skipCount, long scanCount,
+    private static void setRPCStats(RecordEvent metricsEvent, long callTimeMs, long skipCount, long scanCount,
             long returnCount, long aggrCount) {
         metricsEvent.put(QueryRPCPropertyEnum.CALL_TIME.toString(), callTimeMs);
         metricsEvent.put(QueryRPCPropertyEnum.SKIP_COUNT.toString(), skipCount); //Number of skips on region servers based on region meta or fuzzy filter
@@ -155,7 +155,7 @@ public class QueryMetricsFacade {
         metricsEvent.put(QueryRPCPropertyEnum.AGGR_COUNT.toString(), aggrCount); //Count aggregated by coprocessor
     }
 
-    public static void setCubeWrapper(RecordEvent metricsEvent, String projectName, String cubeName, String segmentName,
+    private static void setCubeWrapper(RecordEvent metricsEvent, String projectName, String cubeName, String segmentName,
             long sourceCuboidId, long targetCuboidId, long filterMask) {
         metricsEvent.put(QueryCubePropertyEnum.PROJECT.toString(), projectName);
         metricsEvent.put(QueryCubePropertyEnum.CUBE.toString(), cubeName);
@@ -166,7 +166,7 @@ public class QueryMetricsFacade {
         metricsEvent.put(QueryCubePropertyEnum.FILTER_MASK.toString(), filterMask);
     }
 
-    public static void setCubeStats(RecordEvent metricsEvent, long callCount, long callTimeSum, long callTimeMax,
+    private static void setCubeStats(RecordEvent metricsEvent, long callCount, long callTimeSum, long callTimeMax,
             long skipCount, long scanCount, long returnCount, long aggrCount, boolean ifSuccess, double weightPerHit) {
         metricsEvent.put(QueryCubePropertyEnum.CALL_COUNT.toString(), callCount);
         metricsEvent.put(QueryCubePropertyEnum.TIME_SUM.toString(), callTimeSum);
@@ -180,7 +180,7 @@ public class QueryMetricsFacade {
         metricsEvent.put(QueryCubePropertyEnum.WEIGHT_PER_HIT.toString(), weightPerHit);
     }
 
-    public static void setQueryWrapper(RecordEvent metricsEvent, long queryHashCode, String queryType,
+    private static void setQueryWrapper(RecordEvent metricsEvent, long queryHashCode, String queryType,
             String projectName, String realizationName, int realizationType, Throwable throwable) {
         metricsEvent.put(QueryPropertyEnum.ID_CODE.toString(), queryHashCode);
         metricsEvent.put(QueryPropertyEnum.TYPE.toString(), queryType);
@@ -191,7 +191,7 @@ public class QueryMetricsFacade {
                 throwable == null ? "NULL" : throwable.getClass().getName());
     }
 
-    public static void setQueryStats(RecordEvent metricsEvent, long callTimeMs, long returnCountByCalcite,
+    private static void setQueryStats(RecordEvent metricsEvent, long callTimeMs, long returnCountByCalcite,
             long returnCountByStorage) {
         metricsEvent.put(QueryPropertyEnum.TIME_COST.toString(), callTimeMs);
         metricsEvent.put(QueryPropertyEnum.CALCITE_RETURN_COUNT.toString(), returnCountByCalcite);
