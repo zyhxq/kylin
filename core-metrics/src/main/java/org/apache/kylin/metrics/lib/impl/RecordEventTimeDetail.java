@@ -22,16 +22,10 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.TimeZone;
 
-import org.apache.kylin.common.KylinConfig;
-
 public class RecordEventTimeDetail {
-    private static final TimeZone timeZone;
+    private static final TimeZone timeZone = TimeZone.getTimeZone("GMT");
     private static final ThreadLocal<SimpleDateFormat> dateFormatThreadLocal = new ThreadLocal<SimpleDateFormat>();
     private static final ThreadLocal<SimpleDateFormat> timeFormatThreadLocal = new ThreadLocal<SimpleDateFormat>();
-
-    static {
-        timeZone = TimeZone.getTimeZone(KylinConfig.getInstanceFromEnv().getTimeZone());
-    }
 
     public final String year_begin_date;
     public final String month_begin_date;
