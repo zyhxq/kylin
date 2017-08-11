@@ -36,19 +36,23 @@ public class JobMetricsFacade {
         RecordEvent metricsEvent;
         if (jobStats.throwable == null) {
             metricsEvent = new TimedRecordEvent(KylinConfig.getInstanceFromEnv().getKylinMetricsSubjectJob());
-            setJobWrapper(metricsEvent, jobStats.projectName, jobStats.cubeName, jobStats.jobId, jobStats.jobType, jobStats.cubingType);
-            setJobStats(metricsEvent, jobStats.tableSize, jobStats.cubeSize, jobStats.buildDuration, jobStats.waitResourceTime, jobStats.perBytesTimeCost, //
+            setJobWrapper(metricsEvent, jobStats.user, jobStats.projectName, jobStats.cubeName, jobStats.jobId,
+                    jobStats.jobType, jobStats.cubingType);
+            setJobStats(metricsEvent, jobStats.tableSize, jobStats.cubeSize, jobStats.buildDuration,
+                    jobStats.waitResourceTime, jobStats.perBytesTimeCost, //
                     jobStats.dColumnDistinct, jobStats.dDictBuilding, jobStats.dCubingInmem, jobStats.dHfileConvert);
         } else {
             metricsEvent = new TimedRecordEvent(KylinConfig.getInstanceFromEnv().getKylinMetricsSubjectJobException());
-            setJobExceptionWrapper(metricsEvent, jobStats.projectName, jobStats.cubeName, jobStats.jobId, jobStats.jobType, jobStats.cubingType, //
+            setJobExceptionWrapper(metricsEvent, jobStats.user, jobStats.projectName, jobStats.cubeName, jobStats.jobId,
+                    jobStats.jobType, jobStats.cubingType, //
                     jobStats.throwable.getClass());
         }
         MetricsManager.getInstance().update(metricsEvent);
     }
 
-    private static void setJobWrapper(RecordEvent metricsEvent, String projectName, String cubeName, String jobId,
-            String jobType, String cubingType) {
+    private static void setJobWrapper(RecordEvent metricsEvent, String user, String projectName, String cubeName,
+            String jobId, String jobType, String cubingType) {
+        metricsEvent.put(JobPropertyEnum.USER.toString(), user);
         metricsEvent.put(JobPropertyEnum.PROJECT.toString(), projectName);
         metricsEvent.put(JobPropertyEnum.CUBE.toString(), cubeName);
         metricsEvent.put(JobPropertyEnum.ID_CODE.toString(), jobId);
@@ -57,8 +61,8 @@ public class JobMetricsFacade {
     }
 
     private static void setJobStats(RecordEvent metricsEvent, long tableSize, long cubeSize, long buildDuration,
-                                    long waitResourceTime, double perBytesTimeCost, long dColumnDistinct, long dDictBuilding,
-                                    long dCubingInmem, long dHfileConvert) {
+            long waitResourceTime, double perBytesTimeCost, long dColumnDistinct, long dDictBuilding, long dCubingInmem,
+            long dHfileConvert) {
         metricsEvent.put(JobPropertyEnum.SOURCE_SIZE.toString(), tableSize);
         metricsEvent.put(JobPropertyEnum.CUBE_SIZE.toString(), cubeSize);
         metricsEvent.put(JobPropertyEnum.BUILD_DURATION.toString(), buildDuration);
@@ -70,14 +74,16 @@ public class JobMetricsFacade {
         metricsEvent.put(JobPropertyEnum.STEP_DURATION_HFILE_CONVERT.toString(), dHfileConvert);
     }
 
-    private static <T extends Throwable> void setJobExceptionWrapper(RecordEvent metricsEvent, String projectName,
-                                                                     String cubeName, String jobId, String jobType, String cubingType, Class<T> throwableClass) {
-        setJobWrapper(metricsEvent, projectName, cubeName, jobId, jobType, cubingType);
+    private static <T extends Throwable> void setJobExceptionWrapper(RecordEvent metricsEvent, String user,
+            String projectName, String cubeName, String jobId, String jobType, String cubingType,
+            Class<T> throwableClass) {
+        setJobWrapper(metricsEvent, user, projectName, cubeName, jobId, jobType, cubingType);
         metricsEvent.put(JobPropertyEnum.EXCEPTION.toString(), throwableClass.getName());
     }
 
     public static class JobStatisticsResult {
         // dimensions
+        private String user;
         private String projectName;
         private String cubeName;
         private String jobId;
@@ -100,7 +106,9 @@ public class JobMetricsFacade {
         // exception
         private Throwable throwable;
 
-        public void setWrapper(String projectName, String cubeName, String jobId, String jobType, String cubingType) {
+        public void setWrapper(String user, String projectName, String cubeName, String jobId, String jobType,
+                String cubingType) {
+            this.user = user;
             this.projectName = projectName;
             this.cubeName = cubeName;
             this.jobId = jobId;
@@ -108,7 +116,8 @@ public class JobMetricsFacade {
             this.cubingType = cubingType;
         }
 
-        public void setJobStats(long tableSize, long cubeSize, long buildDuration, long waitResourceTime, double perBytesTimeCost) {
+        public void setJobStats(long tableSize, long cubeSize, long buildDuration, long waitResourceTime,
+                double perBytesTimeCost) {
             this.tableSize = tableSize;
             this.cubeSize = cubeSize;
             this.buildDuration = buildDuration;

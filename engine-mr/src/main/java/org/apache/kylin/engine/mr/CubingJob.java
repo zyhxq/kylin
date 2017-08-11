@@ -18,7 +18,18 @@
 
 package org.apache.kylin.engine.mr;
 
-import com.google.common.base.Strings;
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
+import java.util.TimeZone;
+import java.util.regex.Matcher;
+
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.kylin.common.KylinConfig;
 import org.apache.kylin.common.util.StringUtil;
@@ -41,17 +52,7 @@ import org.apache.kylin.metadata.project.ProjectManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.PrintWriter;
-import java.io.StringWriter;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
-import java.util.TimeZone;
-import java.util.regex.Matcher;
+import com.google.common.base.Strings;
 
 /**
  */
@@ -246,7 +247,7 @@ public class CubingJob extends DefaultChainedExecutable {
 
     protected void updateMetrics(ExecutableContext context, ExecuteResult result, ExecutableState state) {
         JobMetricsFacade.JobStatisticsResult jobStats = new JobMetricsFacade.JobStatisticsResult();
-        jobStats.setWrapper(ProjectInstance.getNormalizedProjectName(getProjectName()),
+        jobStats.setWrapper(getSubmitter(), ProjectInstance.getNormalizedProjectName(getProjectName()),
                 CubingExecutableUtil.getCubeName(getParams()), getId(), getJobType(),
                 getAlgorithm() == null ? "NULL" : getAlgorithm().toString());
 

@@ -38,6 +38,7 @@ import org.apache.kylin.rest.request.SQLRequest;
 import org.apache.kylin.rest.response.SQLResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hashing;
@@ -83,16 +84,19 @@ public class QueryMetricsFacade {
         /**
          * report query related metrics
          */
+        String user = SecurityContextHolder.getContext().getAuthentication().getName();
+        if (user == null) {
+            user = "unknown";
+        }
         final QueryContext.QueryStatisticsResult queryStatisticsResult = sqlResponse.getQueryStatistics();
         for (QueryContext.RPCStatistics entry : queryStatisticsResult.getRpcStatisticsList()) {
             RecordEvent rpcMetricsEvent = new TimedRecordEvent(
                     KylinConfig.getInstanceFromEnv().getKylinMetricsSubjectQueryRpcCall());
             setRPCWrapper(rpcMetricsEvent, //
-                    sqlRequest.getProject(), entry.getRealizationName(), entry.getRpcServer(),
-                    entry.getException());
+                    sqlRequest.getProject(), entry.getRealizationName(), entry.getRpcServer(), entry.getException());
             setRPCStats(rpcMetricsEvent, //
-                    entry.getCallTimeMs(), entry.getSkippedRows(), entry.getScannedRows(),
-                    entry.getReturnedRows(), entry.getAggregatedRows());
+                    entry.getCallTimeMs(), entry.getSkippedRows(), entry.getScannedRows(), entry.getReturnedRows(),
+                    entry.getAggregatedRows());
             //For update rpc level related metrics
             MetricsManager.getInstance().update(rpcMetricsEvent);
         }
@@ -102,7 +106,7 @@ public class QueryMetricsFacade {
             RecordEvent queryMetricsEvent = new TimedRecordEvent(
                     KylinConfig.getInstanceFromEnv().getKylinMetricsSubjectQuery());
             setQueryWrapper(queryMetricsEvent, //
-                    sqlHashCode, sqlResponse.isStorageCacheUsed() ? "CACHE" : contextEntry.getQueryType(),
+                    user, sqlHashCode, sqlResponse.isStorageCacheUsed() ? "CACHE" : contextEntry.getQueryType(),
                     sqlRequest.getProject(), contextEntry.getRealization(), contextEntry.getRealizationType(),
                     sqlResponse.getThrowable());
 
@@ -114,9 +118,9 @@ public class QueryMetricsFacade {
                             KylinConfig.getInstanceFromEnv().getKylinMetricsSubjectQueryCube());
 
                     setCubeWrapper(cubeSegmentMetricsEvent, //
-                            sqlRequest.getProject(), segmentEntry.getCubeName(),
-                            segmentEntry.getSegmentName(), segmentEntry.getSourceCuboidId(),
-                            segmentEntry.getTargetCuboidId(), segmentEntry.getFilterMask());
+                            sqlRequest.getProject(), segmentEntry.getCubeName(), segmentEntry.getSegmentName(),
+                            segmentEntry.getSourceCuboidId(), segmentEntry.getTargetCuboidId(),
+                            segmentEntry.getFilterMask());
 
                     setCubeStats(cubeSegmentMetricsEvent, //
                             segmentEntry.getCallCount(), segmentEntry.getCallTimeSum(), segmentEntry.getCallTimeMax(),
@@ -155,8 +159,8 @@ public class QueryMetricsFacade {
         metricsEvent.put(QueryRPCPropertyEnum.AGGR_COUNT.toString(), aggrCount); //Count aggregated by coprocessor
     }
 
-    private static void setCubeWrapper(RecordEvent metricsEvent, String projectName, String cubeName, String segmentName,
-            long sourceCuboidId, long targetCuboidId, long filterMask) {
+    private static void setCubeWrapper(RecordEvent metricsEvent, String projectName, String cubeName,
+            String segmentName, long sourceCuboidId, long targetCuboidId, long filterMask) {
         metricsEvent.put(QueryCubePropertyEnum.PROJECT.toString(), projectName);
         metricsEvent.put(QueryCubePropertyEnum.CUBE.toString(), cubeName);
         metricsEvent.put(QueryCubePropertyEnum.SEGMENT.toString(), segmentName);
@@ -180,8 +184,9 @@ public class QueryMetricsFacade {
         metricsEvent.put(QueryCubePropertyEnum.WEIGHT_PER_HIT.toString(), weightPerHit);
     }
 
-    private static void setQueryWrapper(RecordEvent metricsEvent, long queryHashCode, String queryType,
+    private static void setQueryWrapper(RecordEvent metricsEvent, String user, long queryHashCode, String queryType,
             String projectName, String realizationName, int realizationType, Throwable throwable) {
+        metricsEvent.put(QueryPropertyEnum.USER.toString(), user);
         metricsEvent.put(QueryPropertyEnum.ID_CODE.toString(), queryHashCode);
         metricsEvent.put(QueryPropertyEnum.TYPE.toString(), queryType);
         metricsEvent.put(QueryPropertyEnum.PROJECT.toString(), projectName);
