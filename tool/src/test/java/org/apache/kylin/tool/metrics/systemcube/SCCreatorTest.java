@@ -26,6 +26,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.kylin.common.util.JsonUtil;
 import org.apache.kylin.common.util.LocalFileMetadataTestCase;
 import org.apache.kylin.metadata.MetadataManager;
 import org.apache.kylin.tool.metrics.systemcube.util.HiveSinkTool;
@@ -33,7 +34,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
@@ -69,9 +69,7 @@ public class SCCreatorTest extends LocalFileMetadataTestCase {
 
         try (BufferedOutputStream os = new BufferedOutputStream(
                 new FileOutputStream("src/test/resources/SCSinkTools.json"))) {
-            ObjectMapper mapper = new ObjectMapper();
-            mapper.enableDefaultTyping();
-            mapper.writeValue(os, Sets.newHashSet(hiveSinkTool));
+            JsonUtil.writeValueWithTyping(os, Sets.newHashSet(hiveSinkTool));
         }
     }
 
@@ -79,9 +77,7 @@ public class SCCreatorTest extends LocalFileMetadataTestCase {
     public void testReadSinkToolsJson() throws Exception {
         try (BufferedInputStream is = new BufferedInputStream(
                 new FileInputStream("src/main/resources/SCSinkTools.json"))) {
-            ObjectMapper mapper = new ObjectMapper();
-            mapper.enableDefaultTyping();
-            Set<HiveSinkTool> sinkToolSet = mapper.readValue(is, HashSet.class);
+            Set<HiveSinkTool> sinkToolSet = JsonUtil.readValueWithTyping(is, HashSet.class);
             for (HiveSinkTool entry : sinkToolSet) {
                 System.out.println(entry.getCubeDescOverrideProperties());
             }

@@ -38,6 +38,7 @@ import org.apache.kylin.common.KylinConfig;
 import org.apache.kylin.common.persistence.RootPersistentEntity;
 import org.apache.kylin.common.persistence.Serializer;
 import org.apache.kylin.common.util.AbstractApplication;
+import org.apache.kylin.common.util.JsonUtil;
 import org.apache.kylin.common.util.OptionsHelper;
 import org.apache.kylin.cube.CubeDescManager;
 import org.apache.kylin.cube.CubeInstance;
@@ -52,7 +53,6 @@ import org.apache.kylin.tool.metrics.systemcube.util.HiveSinkTool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 
@@ -80,12 +80,7 @@ public class SCCreator extends AbstractApplication {
 
     private final KylinConfig config;
 
-    private final ObjectMapper mapper;
-
     public SCCreator() {
-        mapper = new ObjectMapper();
-        mapper.enableDefaultTyping();
-
         config = KylinConfig.getInstanceFromEnv();
 
         options = new Options();
@@ -122,8 +117,8 @@ public class SCCreator extends AbstractApplication {
             output += "/";
         }
 
-        Set<SinkTool> sourceToolSet = mapper
-                .readValue(new BufferedInputStream(new FileInputStream(new File(inputConfig))), HashSet.class);
+        Set<SinkTool> sourceToolSet = JsonUtil.readValueWithTyping(
+                new BufferedInputStream(new FileInputStream(new File(inputConfig))), HashSet.class);
         run(owner, output, sourceToolSet);
     }
 

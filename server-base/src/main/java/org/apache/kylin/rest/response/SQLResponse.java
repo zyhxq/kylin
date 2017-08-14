@@ -21,8 +21,8 @@ package org.apache.kylin.rest.response;
 import java.io.Serializable;
 import java.util.List;
 
-import org.apache.commons.lang.SerializationUtils;
 import org.apache.kylin.common.QueryContext;
+import org.apache.kylin.common.util.JsonUtil;
 import org.apache.kylin.metadata.querymeta.SelectedColumnMeta;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -208,7 +208,7 @@ public class SQLResponse implements Serializable {
     public QueryContext.QueryStatisticsResult getQueryStatistics() {
         if (queryStatistics != null) {
             try {
-                return (QueryContext.QueryStatisticsResult) SerializationUtils.deserialize(queryStatistics);
+                return JsonUtil.readValueWithTyping(queryStatistics, QueryContext.QueryStatisticsResult.class);
             } catch (Exception e) { // Exception may happen due to
                 System.out.println("Error while deserialize queryStatistics due to " + e);
             }
@@ -217,7 +217,14 @@ public class SQLResponse implements Serializable {
     }
 
     public void setQueryStatistics(QueryContext.QueryStatisticsResult queryStatisticsResult) {
-        this.queryStatistics = queryStatisticsResult == null ? null
-                : SerializationUtils.serialize(queryStatisticsResult);
+        if (queryStatisticsResult != null) {
+            try {
+                this.queryStatistics = JsonUtil.writeValueWithTypingAsBytes(queryStatisticsResult);
+                return;
+            } catch (Exception e) {
+                System.out.println("Error while serialize queryStatistics due to " + e);
+            }
+        }
+        this.queryStatistics = null;
     }
 }

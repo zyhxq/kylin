@@ -221,6 +221,38 @@ public class QueryContext {
             return skippedRows;
         }
 
+        public void setRealizationName(String realizationName) {
+            this.realizationName = realizationName;
+        }
+
+        public void setRpcServer(String rpcServer) {
+            this.rpcServer = rpcServer;
+        }
+
+        public void setCallTimeMs(long callTimeMs) {
+            this.callTimeMs = callTimeMs;
+        }
+
+        public void setSkippedRows(long skippedRows) {
+            this.skippedRows = skippedRows;
+        }
+
+        public void setScannedRows(long scannedRows) {
+            this.scannedRows = scannedRows;
+        }
+
+        public void setReturnedRows(long returnedRows) {
+            this.returnedRows = returnedRows;
+        }
+
+        public void setAggregatedRows(long aggregatedRows) {
+            this.aggregatedRows = aggregatedRows;
+        }
+
+        public void setScannedBytes(long scannedBytes) {
+            this.scannedBytes = scannedBytes;
+        }
+
         public long getScannedRows() {
             return scannedRows;
         }
@@ -289,6 +321,62 @@ public class QueryContext {
             this.storageScannedBytes += scanBytes;
         }
 
+        public void setCubeName(String cubeName) {
+            this.cubeName = cubeName;
+        }
+
+        public void setSegmentName(String segmentName) {
+            this.segmentName = segmentName;
+        }
+
+        public void setSourceCuboidId(long sourceCuboidId) {
+            this.sourceCuboidId = sourceCuboidId;
+        }
+
+        public void setTargetCuboidId(long targetCuboidId) {
+            this.targetCuboidId = targetCuboidId;
+        }
+
+        public void setFilterMask(long filterMask) {
+            this.filterMask = filterMask;
+        }
+
+        public void setIfSuccess(boolean ifSuccess) {
+            this.ifSuccess = ifSuccess;
+        }
+
+        public void setCallCount(long callCount) {
+            this.callCount = callCount;
+        }
+
+        public void setCallTimeSum(long callTimeSum) {
+            this.callTimeSum = callTimeSum;
+        }
+
+        public void setCallTimeMax(long callTimeMax) {
+            this.callTimeMax = callTimeMax;
+        }
+
+        public void setStorageSkippedRows(long storageSkippedRows) {
+            this.storageSkippedRows = storageSkippedRows;
+        }
+
+        public void setStorageScannedRows(long storageScannedRows) {
+            this.storageScannedRows = storageScannedRows;
+        }
+
+        public void setStorageReturnedRows(long storageReturnedRows) {
+            this.storageReturnedRows = storageReturnedRows;
+        }
+
+        public void setStorageAggregatedRows(long storageAggregatedRows) {
+            this.storageAggregatedRows = storageAggregatedRows;
+        }
+
+        public void setStorageScannedBytes(long storageScannedBytes) {
+            this.storageScannedBytes = storageScannedBytes;
+        }
+
         public String getCubeName() {
             return cubeName;
         }
@@ -355,10 +443,13 @@ public class QueryContext {
     public static class CubeSegmentStatisticsResult implements Serializable {
         protected static final long serialVersionUID = 1L;
 
-        private final String queryType;
-        private final Map<String, Map<String, CubeSegmentStatistics>> cubeSegmentStatisticsMap;
+        private String queryType;
+        private Map<String, Map<String, CubeSegmentStatistics>> cubeSegmentStatisticsMap;
         private String realization;
         private int realizationType;
+
+        public CubeSegmentStatisticsResult() {
+        }
 
         public CubeSegmentStatisticsResult(String queryType,
                 Map<String, Map<String, CubeSegmentStatistics>> cubeSegmentStatisticsMap) {
@@ -382,8 +473,18 @@ public class QueryContext {
             this.realizationType = realizationType;
         }
 
+        public void setQueryType(String queryType) {
+            this.queryType = queryType;
+        }
+
+        public void setCubeSegmentStatisticsMap(
+                Map<String, Map<String, CubeSegmentStatistics>> cubeSegmentStatisticsMap) {
+            this.cubeSegmentStatisticsMap = cubeSegmentStatisticsMap;
+        }
+
         public String getQueryType() {
             return queryType;
+
         }
 
         public Map<String, Map<String, CubeSegmentStatistics>> getCubeSegmentStatisticsMap() {
@@ -401,8 +502,8 @@ public class QueryContext {
     public static class QueryStatisticsResult implements Serializable {
         protected static final long serialVersionUID = 1L;
 
-        private final List<RPCStatistics> rpcStatisticsList;
-        private final List<CubeSegmentStatisticsResult> cubeSegmentStatisticsResultList;
+        private List<RPCStatistics> rpcStatisticsList;
+        private List<CubeSegmentStatisticsResult> cubeSegmentStatisticsResultList;
 
         public QueryStatisticsResult() {
             rpcStatisticsList = Lists.newArrayList();
@@ -412,6 +513,15 @@ public class QueryContext {
         public QueryStatisticsResult(List<RPCStatistics> rpcStatisticsList,
                 List<CubeSegmentStatisticsResult> cubeSegmentStatisticsResultList) {
             this.rpcStatisticsList = rpcStatisticsList;
+            this.cubeSegmentStatisticsResultList = cubeSegmentStatisticsResultList;
+        }
+
+        public void setRpcStatisticsList(List<RPCStatistics> rpcStatisticsList) {
+            this.rpcStatisticsList = rpcStatisticsList;
+        }
+
+        public void setCubeSegmentStatisticsResultList(
+                List<CubeSegmentStatisticsResult> cubeSegmentStatisticsResultList) {
             this.cubeSegmentStatisticsResultList = cubeSegmentStatisticsResultList;
         }
 
