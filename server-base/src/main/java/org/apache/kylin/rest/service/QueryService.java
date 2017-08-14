@@ -425,6 +425,7 @@ public class QueryService extends BasicService {
                 sqlResponse.setThrowable(e.getCause() == null ? e : ExceptionUtils.getRootCause(e));
                 sqlResponse.setTotalScanCount(queryContext.getScannedRows());
                 sqlResponse.setTotalScanBytes(queryContext.getScannedBytes());
+                sqlResponse.setQueryStatistics(queryContext.getQueryStatisticsResult());
 
                 if (queryCacheEnabled && e.getCause() != null
                         && ExceptionUtils.getRootCause(e) instanceof ResourceLimitExceededException) {

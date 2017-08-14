@@ -68,6 +68,11 @@ public class QueryMetricsFacade {
     }
 
     public static void updateMetrics(SQLRequest sqlRequest, SQLResponse sqlResponse) {
+        updateMetricsToLocal(sqlRequest, sqlResponse);
+        updateMetricsToReservoir(sqlRequest, sqlResponse);
+    }
+
+    private static void updateMetricsToLocal(SQLRequest sqlRequest, SQLResponse sqlResponse) {
         if (!enabled)
             return;
 
@@ -80,10 +85,15 @@ public class QueryMetricsFacade {
 
         String cubeMetricName = projectName + ",sub=" + cubeName;
         update(getQueryMetrics(cubeMetricName), sqlResponse);
+    }
 
-        /**
-         * report query related metrics
-         */
+    /**
+     * report query related metrics
+     */
+    private static void updateMetricsToReservoir(SQLRequest sqlRequest, SQLResponse sqlResponse) {
+        if (!KylinConfig.getInstanceFromEnv().isKylinMetricsReporterForQueryEnabled()) {
+            return;
+        }
         String user = SecurityContextHolder.getContext().getAuthentication().getName();
         if (user == null) {
             user = "unknown";

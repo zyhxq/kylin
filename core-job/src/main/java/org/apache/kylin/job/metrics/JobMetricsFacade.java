@@ -30,6 +30,9 @@ public class JobMetricsFacade {
     private static final Logger logger = LoggerFactory.getLogger(JobMetricsFacade.class);
 
     public static void updateMetrics(JobStatisticsResult jobStats) {
+        if (!KylinConfig.getInstanceFromEnv().isKylinMetricsReporterForJobEnabled()) {
+            return;
+        }
         /**
          * report job related metrics
          */

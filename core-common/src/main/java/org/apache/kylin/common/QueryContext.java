@@ -166,6 +166,8 @@ public class QueryContext {
     }
 
     public static class RPCStatistics implements Serializable {
+        protected static final long serialVersionUID = 1L;
+
         private String realizationName;
         private String rpcServer;
 
@@ -234,9 +236,16 @@ public class QueryContext {
         public long getScannedBytes() {
             return scannedBytes;
         }
+
+        @Override
+        public String toString() {
+            return "RPCStatistics [rpcServer=" + rpcServer + ",realizationName=" + realizationName + "]";
+        }
     }
 
     public static class CubeSegmentStatistics implements Serializable {
+        protected static final long serialVersionUID = 1L;
+
         private String cubeName;
         private String segmentName;
         private long sourceCuboidId;
@@ -335,9 +344,17 @@ public class QueryContext {
         public String getSegmentName() {
             return segmentName;
         }
+
+        @Override
+        public String toString() {
+            return "CubeSegmentStatistics [cubeName=" + cubeName + ",segmentName=" + segmentName + ",sourceCuboidId="
+                    + sourceCuboidId + ",targetCuboidId=" + targetCuboidId + ",filterMask=" + filterMask + "]";
+        }
     }
 
     public static class CubeSegmentStatisticsResult implements Serializable {
+        protected static final long serialVersionUID = 1L;
+
         private final String queryType;
         private final Map<String, Map<String, CubeSegmentStatistics>> cubeSegmentStatisticsMap;
         private String realization;
@@ -372,11 +389,25 @@ public class QueryContext {
         public Map<String, Map<String, CubeSegmentStatistics>> getCubeSegmentStatisticsMap() {
             return cubeSegmentStatisticsMap;
         }
+
+        @Override
+        public String toString() {
+            return "CubeSegmentStatisticsResult [queryType=" + queryType + ",realization=" + realization
+                    + ",realizationType=" + realizationType + ",cubeSegmentStatisticsMap=" + cubeSegmentStatisticsMap
+                    + "]";
+        }
     }
 
     public static class QueryStatisticsResult implements Serializable {
+        protected static final long serialVersionUID = 1L;
+
         private final List<RPCStatistics> rpcStatisticsList;
         private final List<CubeSegmentStatisticsResult> cubeSegmentStatisticsResultList;
+
+        public QueryStatisticsResult() {
+            rpcStatisticsList = Lists.newArrayList();
+            cubeSegmentStatisticsResultList = Lists.newArrayList();
+        }
 
         public QueryStatisticsResult(List<RPCStatistics> rpcStatisticsList,
                 List<CubeSegmentStatisticsResult> cubeSegmentStatisticsResultList) {
@@ -390,6 +421,12 @@ public class QueryContext {
 
         public List<CubeSegmentStatisticsResult> getCubeSegmentStatisticsResultList() {
             return cubeSegmentStatisticsResultList;
+        }
+
+        @Override
+        public String toString() {
+            return "QueryStatisticsResult [rpcStatisticsList=" + rpcStatisticsList + ",cubeSegmentStatisticsResultList"
+                    + cubeSegmentStatisticsResultList + "]";
         }
     }
 }

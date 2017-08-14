@@ -206,10 +206,18 @@ public class SQLResponse implements Serializable {
 
     @JsonIgnore
     public QueryContext.QueryStatisticsResult getQueryStatistics() {
-        return (QueryContext.QueryStatisticsResult) SerializationUtils.deserialize(queryStatistics);
+        if (queryStatistics != null) {
+            try {
+                return (QueryContext.QueryStatisticsResult) SerializationUtils.deserialize(queryStatistics);
+            } catch (Exception e) { // Exception may happen due to
+                System.out.println("Error while deserialize queryStatistics due to " + e);
+            }
+        }
+        return new QueryContext.QueryStatisticsResult();
     }
 
     public void setQueryStatistics(QueryContext.QueryStatisticsResult queryStatisticsResult) {
-        this.queryStatistics = SerializationUtils.serialize(queryStatisticsResult);
+        this.queryStatistics = queryStatisticsResult == null ? null
+                : SerializationUtils.serialize(queryStatisticsResult);
     }
 }
