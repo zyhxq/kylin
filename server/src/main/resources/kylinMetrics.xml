@@ -66,6 +66,8 @@
                                           value="org.apache.kylin.metrics.lib.impl.hive.HiveReservoirReporter"/>
                                 <property name="second">
                                     <props>
+                                        <prop key="dfs.replication">1</prop>
+                                        <prop key="hive.execution.engine">mr</prop>
                                     </props>
                                 </property>
                             </bean>

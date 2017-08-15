@@ -25,7 +25,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
-import org.apache.commons.io.IOUtils;
 import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -63,12 +62,16 @@ public class HiveProducer {
     private final String CONTENT_FILE_NAME;
 
     public HiveProducer(Properties props) throws Exception {
-        hiveConf = new HiveConf();
-        hdfs = FileSystem.get(hiveConf);
+        this(props, new HiveConf());
+    }
 
+    HiveProducer(Properties props, HiveConf hiveConfig) throws Exception {
+        hiveConf = hiveConfig;
         for (Map.Entry<Object, Object> e : props.entrySet()) {
             hiveConf.set(e.getKey().toString(), e.getValue().toString());
         }
+
+        hdfs = FileSystem.get(hiveConf);
 
         tableFieldSchemaCache = CacheBuilder.newBuilder().removalListener(new RemovalListener<Pair<String, String>, Pair<String, List<FieldSchema>>>() {
             @Override
@@ -164,15 +167,13 @@ public class HiveProducer {
                 throw new RuntimeException("Fail to create HDFS file: " + partitionContentPath + " after " + nRetry + " retries");
             }
         }
-        FSDataOutputStream fout = hdfs.append(partitionContentPath);
-        try {
+        try (FSDataOutputStream fout = hdfs.append(partitionContentPath)) {
             for (HiveProducerRecord elem : recordItr) {
                 fout.writeBytes(elem.valueToString() + "\n");
             }
         } catch (IOException e) {
-            logger.error("Fails to write metrics to file " + partitionContentPath.toString());
-        } finally {
-            IOUtils.closeQuietly(fout);
+            System.out.println("Fails to write metrics to file " + partitionContentPath.toString() + " due to " + e);
+            logger.error("Fails to write metrics to file " + partitionContentPath.toString() + " due to " + e);
         }
     }
 
