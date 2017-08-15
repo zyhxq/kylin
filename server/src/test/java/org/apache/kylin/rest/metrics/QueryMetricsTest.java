@@ -144,7 +144,7 @@ public class QueryMetricsTest extends ServiceTestBase {
         context.addRPCStatistics(ctxId, "sandbox", "test_cube", "20100101000000_20150101000000", 3L, 3L, 3L, null, 80L,
                 0L, 2L, 2L, 0L, 30L);
 
-        sqlResponse.setQueryStatistics(context.getQueryStatisticsResult());
+        sqlResponse.setCubeSegmentStatisticsList(context.getCubeSegmentStatisticsResultList());
 
         QueryMetricsFacade.updateMetrics(sqlRequest, sqlResponse);
 

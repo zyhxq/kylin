@@ -19,6 +19,7 @@
 package org.apache.kylin.rest.response;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.kylin.common.QueryContext;
@@ -26,6 +27,7 @@ import org.apache.kylin.common.util.JsonUtil;
 import org.apache.kylin.metadata.querymeta.SelectedColumnMeta;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.google.common.collect.Lists;
 
 public class SQLResponse implements Serializable {
     protected static final long serialVersionUID = 1L;
@@ -205,21 +207,22 @@ public class SQLResponse implements Serializable {
     }
 
     @JsonIgnore
-    public QueryContext.QueryStatisticsResult getQueryStatistics() {
+    public ArrayList<QueryContext.CubeSegmentStatisticsResult> getCubeSegmentStatisticsList() {
         if (queryStatistics != null) {
             try {
-                return JsonUtil.readValueWithTyping(queryStatistics, QueryContext.QueryStatisticsResult.class);
+                return JsonUtil.readValueWithTyping(queryStatistics, ArrayList.class);
             } catch (Exception e) { // Exception may happen due to
                 System.out.println("Error while deserialize queryStatistics due to " + e);
             }
         }
-        return new QueryContext.QueryStatisticsResult();
+        return Lists.newArrayList();
     }
 
-    public void setQueryStatistics(QueryContext.QueryStatisticsResult queryStatisticsResult) {
-        if (queryStatisticsResult != null) {
+    public void setCubeSegmentStatisticsList(
+            ArrayList<QueryContext.CubeSegmentStatisticsResult> cubeSegmentStatisticsList) {
+        if (cubeSegmentStatisticsList != null) {
             try {
-                this.queryStatistics = JsonUtil.writeValueWithTypingAsBytes(queryStatisticsResult);
+                this.queryStatistics = JsonUtil.writeValueWithTypingAsBytes(cubeSegmentStatisticsList);
                 return;
             } catch (Exception e) {
                 System.out.println("Error while serialize queryStatistics due to " + e);

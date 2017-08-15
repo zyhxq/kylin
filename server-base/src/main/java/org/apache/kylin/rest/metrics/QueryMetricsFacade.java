@@ -98,8 +98,7 @@ public class QueryMetricsFacade {
         if (user == null) {
             user = "unknown";
         }
-        final QueryContext.QueryStatisticsResult queryStatisticsResult = sqlResponse.getQueryStatistics();
-        for (QueryContext.RPCStatistics entry : queryStatisticsResult.getRpcStatisticsList()) {
+        for (QueryContext.RPCStatistics entry : QueryContext.current().getRpcStatisticsList()) {
             RecordEvent rpcMetricsEvent = new TimedRecordEvent(
                     KylinConfig.getInstanceFromEnv().getKylinMetricsSubjectQueryRpcCall());
             setRPCWrapper(rpcMetricsEvent, //
@@ -111,8 +110,7 @@ public class QueryMetricsFacade {
             MetricsManager.getInstance().update(rpcMetricsEvent);
         }
         long sqlHashCode = getSqlHashCode(sqlRequest.getSql());
-        for (QueryContext.CubeSegmentStatisticsResult contextEntry : queryStatisticsResult
-                .getCubeSegmentStatisticsResultList()) {
+        for (QueryContext.CubeSegmentStatisticsResult contextEntry : sqlResponse.getCubeSegmentStatisticsList()) {
             RecordEvent queryMetricsEvent = new TimedRecordEvent(
                     KylinConfig.getInstanceFromEnv().getKylinMetricsSubjectQuery());
             setQueryWrapper(queryMetricsEvent, //

@@ -19,6 +19,7 @@
 package org.apache.kylin.common;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -107,9 +108,12 @@ public class QueryContext {
         cubeSegmentStatisticsResult.setRealizationType(realizationType);
     }
 
-    public QueryStatisticsResult getQueryStatisticsResult() {
-        return new QueryStatisticsResult(rpcStatisticsList,
-                Lists.newArrayList(cubeSegmentStatisticsResultMap.values()));
+    public List<RPCStatistics> getRpcStatisticsList() {
+        return rpcStatisticsList;
+    }
+
+    public ArrayList<CubeSegmentStatisticsResult> getCubeSegmentStatisticsResultList() {
+        return Lists.newArrayList(cubeSegmentStatisticsResultMap.values());
     }
 
     public void addRPCStatistics(int ctxId, String rpcServer, String cubeName, String segmentName, long sourceCuboidId,
@@ -496,47 +500,6 @@ public class QueryContext {
             return "CubeSegmentStatisticsResult [queryType=" + queryType + ",realization=" + realization
                     + ",realizationType=" + realizationType + ",cubeSegmentStatisticsMap=" + cubeSegmentStatisticsMap
                     + "]";
-        }
-    }
-
-    public static class QueryStatisticsResult implements Serializable {
-        protected static final long serialVersionUID = 1L;
-
-        private List<RPCStatistics> rpcStatisticsList;
-        private List<CubeSegmentStatisticsResult> cubeSegmentStatisticsResultList;
-
-        public QueryStatisticsResult() {
-            rpcStatisticsList = Lists.newArrayList();
-            cubeSegmentStatisticsResultList = Lists.newArrayList();
-        }
-
-        public QueryStatisticsResult(List<RPCStatistics> rpcStatisticsList,
-                List<CubeSegmentStatisticsResult> cubeSegmentStatisticsResultList) {
-            this.rpcStatisticsList = rpcStatisticsList;
-            this.cubeSegmentStatisticsResultList = cubeSegmentStatisticsResultList;
-        }
-
-        public void setRpcStatisticsList(List<RPCStatistics> rpcStatisticsList) {
-            this.rpcStatisticsList = rpcStatisticsList;
-        }
-
-        public void setCubeSegmentStatisticsResultList(
-                List<CubeSegmentStatisticsResult> cubeSegmentStatisticsResultList) {
-            this.cubeSegmentStatisticsResultList = cubeSegmentStatisticsResultList;
-        }
-
-        public List<RPCStatistics> getRpcStatisticsList() {
-            return rpcStatisticsList;
-        }
-
-        public List<CubeSegmentStatisticsResult> getCubeSegmentStatisticsResultList() {
-            return cubeSegmentStatisticsResultList;
-        }
-
-        @Override
-        public String toString() {
-            return "QueryStatisticsResult [rpcStatisticsList=" + rpcStatisticsList + ",cubeSegmentStatisticsResultList"
-                    + cubeSegmentStatisticsResultList + "]";
         }
     }
 }
