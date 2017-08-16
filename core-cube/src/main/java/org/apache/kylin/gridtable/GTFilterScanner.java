@@ -41,6 +41,7 @@ public class GTFilterScanner extends GTForwardingScanner {
     final private IEvaluatableTuple oneTuple; // avoid instance creation
 
     private GTRecord next = null;
+    private long inputRowCount = 0L;
 
     public GTFilterScanner(IGTScanner delegated, GTScanRequest req) throws IOException {
         super(delegated);
@@ -57,6 +58,10 @@ public class GTFilterScanner extends GTForwardingScanner {
             throw new IllegalArgumentException();
     }
 
+    public long getInputRowCount() {
+        return inputRowCount;
+    }
+
     @Override
     public Iterator<GTRecord> iterator() {
         return new Iterator<GTRecord>() {
@@ -71,6 +76,7 @@ public class GTFilterScanner extends GTForwardingScanner {
 
                 while (inputIterator.hasNext()) {
                     next = inputIterator.next();
+                    inputRowCount++;
                     if (!evaluate()) {
                         continue;
                     }
