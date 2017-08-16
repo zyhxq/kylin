@@ -329,6 +329,10 @@ abstract public class KylinConfigBase implements Serializable {
     // CUBE
     // ============================================================================
 
+    public String getCuboidScheduler() {
+        return getOptional("kylin.cube.cuboid-scheduler", "org.apache.kylin.cube.cuboid.DefaultCuboidScheduler");
+    }
+
     public double getJobCuboidSizeRatio() {
         return Double.parseDouble(getOptional("kylin.cube.size-estimate-ratio", "0.25"));
     }
@@ -665,7 +669,7 @@ abstract public class KylinConfigBase implements Serializable {
     }
 
     private static final Pattern COPROCESSOR_JAR_NAME_PATTERN = Pattern.compile("kylin-coprocessor-(.+)\\.jar");
-    private static final Pattern JOB_JAR_NAME_PATTERN = Pattern.compile("kylin-core-job-(.+)\\.jar");
+    private static final Pattern JOB_JAR_NAME_PATTERN = Pattern.compile("kylin-job-(.+)\\.jar");
 
     public String getCoprocessorLocalJar() {
         final String coprocessorJar = getOptional("kylin.storage.hbase.coprocessor-local-jar");
