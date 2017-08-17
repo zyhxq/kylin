@@ -87,6 +87,11 @@ public class DefaultCuboidScheduler extends CuboidScheduler {
         return Sets.newHashSet(allCuboidIds);
     }
 
+    @Override
+    public boolean isValid(long requestCuboid) {
+        return allCuboidIds.contains(requestCuboid);
+    }
+
     /**
      * Collect cuboid from bottom up, considering all factor including black list
      * Build tree steps:
@@ -205,6 +210,10 @@ public class DefaultCuboidScheduler extends CuboidScheduler {
     }
 
     public long findBestMatchCuboid1(long cuboid) {
+        if (isValid(cuboid)) {
+            return cuboid;
+        }
+
         List<Long> onTreeCandidates = Lists.newArrayList();
         for (AggregationGroup agg : cubeDesc.getAggregationGroups()) {
             Long candidate = translateToOnTreeCuboid(agg, cuboid);
@@ -218,7 +227,7 @@ public class DefaultCuboidScheduler extends CuboidScheduler {
         }
 
         long onTreeCandi = Collections.min(onTreeCandidates, Cuboid.cuboidSelectComparator);
-        if (allCuboidIds.contains(onTreeCandi)) {
+        if (isValid(onTreeCandi)) {
             return onTreeCandi;
         }
 
@@ -228,7 +237,7 @@ public class DefaultCuboidScheduler extends CuboidScheduler {
     public long doFindBestMatchCuboid1(long cuboid) {
         long parent = getOnTreeParent(cuboid);
         while (parent > 0) {
-            if (allCuboidIds.contains(parent)) {
+            if (isValid(parent)) {
                 break;
             }
             parent = getOnTreeParent(parent);

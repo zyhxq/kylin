@@ -69,6 +69,11 @@ public class TreeCuboidScheduler extends CuboidScheduler {
         return cuboidTree.findBestMatchCuboid(cuboidId);
     }
 
+    @Override
+    public boolean isValid(long requestCuboid) {
+        return cuboidTree.isValid(requestCuboid);
+    }
+
     public static class CuboidTree {
         private int treeLevels;
 
@@ -129,11 +134,15 @@ public class TreeCuboidScheduler extends CuboidScheduler {
 
         public long findBestMatchCuboid(long cuboidId) {
             // exactly match
-            if (index.containsKey(cuboidId)) {
+            if (isValid(cuboidId)) {
                 return cuboidId;
             }
 
             return findBestParent(cuboidId).cuboidId;
+        }
+
+        public boolean isValid(long cuboidId) {
+            return index.containsKey(cuboidId);
         }
 
         private int getCuboidCount(long cuboidId) {
