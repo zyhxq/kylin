@@ -27,6 +27,7 @@ import org.apache.kylin.common.KylinConfigExt;
 import org.apache.kylin.common.persistence.ResourceStore;
 import org.apache.kylin.common.persistence.RootPersistentEntity;
 import org.apache.kylin.common.util.Pair;
+import org.apache.kylin.cube.cuboid.CuboidScheduler;
 import org.apache.kylin.cube.model.CubeDesc;
 import org.apache.kylin.metadata.model.ColumnDesc;
 import org.apache.kylin.metadata.model.DataModelDesc;
@@ -93,8 +94,23 @@ public class CubeInstance extends RootPersistentEntity implements IRealization, 
     @JsonProperty("create_time_utc")
     private long createTimeUTC;
 
+    // cuboid scheduler lazy built
+    transient private CuboidScheduler cuboidScheduler;
+
     // default constructor for jackson
     public CubeInstance() {
+    }
+
+    public CuboidScheduler getCuboidScheduler() {
+        if (cuboidScheduler != null)
+            return cuboidScheduler;
+
+        synchronized (this) {
+            if (cuboidScheduler == null) {
+                cuboidScheduler = getDescriptor().getInitialCuboidScheduler();
+            }
+        }
+        return cuboidScheduler;
     }
 
     public List<CubeSegment> getBuildingSegments() {

@@ -31,6 +31,7 @@ import org.apache.kylin.common.KylinConfig;
 import org.apache.kylin.common.persistence.ResourceStore;
 import org.apache.kylin.common.util.Dictionary;
 import org.apache.kylin.common.util.ShardingHash;
+import org.apache.kylin.cube.cuboid.CuboidScheduler;
 import org.apache.kylin.cube.kv.CubeDimEncMap;
 import org.apache.kylin.cube.kv.RowConstants;
 import org.apache.kylin.cube.model.CubeDesc;
@@ -117,6 +118,10 @@ public class CubeSegment implements Comparable<CubeSegment>, IBuildable, ISegmen
 
     public CubeDesc getCubeDesc() {
         return getCubeInstance().getDescriptor();
+    }
+
+    public CuboidScheduler getCuboidScheduler() {
+        return getCubeInstance().getCuboidScheduler();
     }
 
     /**
