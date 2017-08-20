@@ -18,24 +18,16 @@
 
 package org.apache.kylin.storage.hbase.steps;
 
-import java.io.IOException;
-
 import org.apache.commons.cli.Options;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.hbase.HBaseConfiguration;
+import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.HTable;
-import org.apache.hadoop.hbase.mapreduce.HFileOutputFormat;
+import org.apache.hadoop.hbase.mapreduce.HFileOutputFormat2;
 import org.apache.hadoop.hbase.mapreduce.KeyValueSortReducer;
 import org.apache.hadoop.hdfs.DFSConfigKeys;
-import org.apache.hadoop.io.SequenceFile;
-import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.lib.input.SequenceFileInputFormat;
-import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
-import org.apache.hadoop.mapreduce.lib.partition.TotalOrderPartitioner;
-import org.apache.hadoop.util.ReflectionUtils;
 import org.apache.hadoop.util.ToolRunner;
 import org.apache.kylin.common.KylinConfig;
 import org.apache.kylin.cube.CubeInstance;
@@ -59,13 +51,10 @@ public class CubeHFileJob extends AbstractHadoopJob {
         try {
             options.addOption(OPTION_JOB_NAME);
             options.addOption(OPTION_CUBE_NAME);
-            options.addOption(OPTION_PARTITION_FILE_PATH);
             options.addOption(OPTION_INPUT_PATH);
             options.addOption(OPTION_OUTPUT_PATH);
             options.addOption(OPTION_HTABLE_NAME);
             parseOptions(options, args);
-
-            Path partitionFilePath = new Path(getOptionValue(OPTION_PARTITION_FILE_PATH));
 
             Path output = new Path(getOptionValue(OPTION_OUTPUT_PATH));
             String cubeName = getOptionValue(OPTION_CUBE_NAME).toUpperCase();
@@ -80,7 +69,7 @@ public class CubeHFileJob extends AbstractHadoopJob {
             HBaseConnection.addHBaseClusterNNHAConfiguration(job.getConfiguration());
 
             addInputDirs(getOptionValue(OPTION_INPUT_PATH), job);
-            FileOutputFormat.setOutputPath(job, output);
+            HFileOutputFormat2.setOutputPath(job, output);
 
             job.setInputFormatClass(SequenceFileInputFormat.class);
             job.setMapperClass(CubeHFileMapper.class);
@@ -91,15 +80,14 @@ public class CubeHFileJob extends AbstractHadoopJob {
             // add metadata to distributed cache
             attachCubeMetadata(cube, job.getConfiguration());
 
-            Configuration hbaseConf = HBaseConfiguration.create(getConf());
-            HTable htable = new HTable(hbaseConf, getOptionValue(OPTION_HTABLE_NAME).toUpperCase());
+            Connection conn = HBaseConnection.get(KylinConfig.getInstanceFromEnv().getMetadataUrl());
+            HTable htable = (HTable)conn.getTable(TableName.valueOf(getOptionValue(OPTION_HTABLE_NAME)));
 
             // Automatic config !
-            HFileOutputFormat.configureIncrementalLoad(job, htable);
-            reconfigurePartitions(hbaseConf, partitionFilePath);
+            HFileOutputFormat2.configureIncrementalLoad(job, htable.getTableDescriptor(), htable.getRegionLocator());
 
             // set block replication to 3 for hfiles
-            hbaseConf.set(DFSConfigKeys.DFS_REPLICATION_KEY, "3");
+            job.getConfiguration().set(DFSConfigKeys.DFS_REPLICATION_KEY, "3");
 
             this.deletePath(job.getConfiguration(), output);
 
@@ -110,31 +98,6 @@ public class CubeHFileJob extends AbstractHadoopJob {
         }
     }
 
-    /**
-     * Check if there's partition files for hfile, if yes replace the table splits, to make the job more reducers
-     * @param conf the job configuration
-     * @param path the hfile partition file
-     * @throws IOException
-     */
-    @SuppressWarnings("deprecation")
-    private void reconfigurePartitions(Configuration conf, Path path) throws IOException {
-        FileSystem fs = path.getFileSystem(conf);
-        if (fs.exists(path)) {
-            try (SequenceFile.Reader reader = new SequenceFile.Reader(fs, path, conf)) {
-                int partitionCount = 0;
-                Writable key = (Writable) ReflectionUtils.newInstance(reader.getKeyClass(), conf);
-                Writable value = (Writable) ReflectionUtils.newInstance(reader.getValueClass(), conf);
-                while (reader.next(key, value)) {
-                    partitionCount++;
-                }
-                TotalOrderPartitioner.setPartitionFile(job.getConfiguration(), path);
-                // The reduce tasks should be one more than partition keys
-                job.setNumReduceTasks(partitionCount + 1);
-            }
-        } else {
-            logger.info("File '" + path.toString() + " doesn't exist, will not reconfigure hfile Partitions");
-        }
-    }
 
     public static void main(String[] args) throws Exception {
         int exitCode = ToolRunner.run(new CubeHFileJob(), args);
