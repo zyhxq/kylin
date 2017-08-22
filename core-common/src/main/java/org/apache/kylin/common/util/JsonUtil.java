@@ -92,6 +92,10 @@ public class JsonUtil {
         return typeMapper.readValue(src, valueType);
     }
 
+    public static <T> T readValue(String content, TypeReference<T> valueTypeRef) throws IOException {
+        return mapper.readValue(content, valueTypeRef);
+    }
+
     public static void writeValueIndent(OutputStream out, Object value)
             throws IOException, JsonGenerationException, JsonMappingException {
         indentMapper.writeValue(out, value);

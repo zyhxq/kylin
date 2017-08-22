@@ -22,8 +22,6 @@ import static org.apache.kylin.cube.cuboid.CuboidModeEnum.CURRENT;
 import static org.apache.kylin.cube.cuboid.CuboidModeEnum.RECOMMEND;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -59,6 +57,7 @@ import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.base.Objects;
 import com.google.common.collect.Lists;
 
@@ -359,21 +358,23 @@ public class CubeInstance extends RootPersistentEntity implements IRealization, 
         }
     }
 
-    public HashMap<Long, Long> getCuboids() {
+    public Map<Long, Long> getCuboids() {
         if (cuboidBytes == null)
             return null;
         byte[] uncompressed;
         try {
             uncompressed = CompressionUtils.decompress(cuboidBytes);
             String str = new String(uncompressed, "UTF-8");
-            HashMap<Long, Long> cuboids = JsonUtil.readValue(str, HashMap.class);
+            TypeReference<Map<Long, Long>> typeRef = new TypeReference<Map<Long, Long>>() {
+            };
+            Map<Long, Long> cuboids = JsonUtil.readValue(str, typeRef);
             return cuboids.isEmpty() ? null : cuboids;
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
 
-    public void setCuboids(HashMap<Long, Long> cuboids) {
+    public void setCuboids(Map<Long, Long> cuboids) {
         if (cuboids == null)
             return;
         if (cuboids.isEmpty()) {
@@ -390,21 +391,23 @@ public class CubeInstance extends RootPersistentEntity implements IRealization, 
         }
     }
 
-    public HashSet<Long> getCuboidsRecommend() {
+    public Set<Long> getCuboidsRecommend() {
         if (cuboidBytesRecommend == null)
             return null;
         byte[] uncompressed;
         try {
             uncompressed = CompressionUtils.decompress(cuboidBytesRecommend);
             String str = new String(uncompressed, "UTF-8");
-            HashSet<Long> cuboids = JsonUtil.readValue(str, HashSet.class);
+            TypeReference<Set<Long>> typeRef = new TypeReference<Set<Long>>() {
+            };
+            Set<Long> cuboids = JsonUtil.readValue(str, typeRef);
             return cuboids.isEmpty() ? null : cuboids;
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
 
-    public void setCuboidsRecommend(HashSet<Long> cuboids) {
+    public void setCuboidsRecommend(Set<Long> cuboids) {
         if (cuboids == null)
             return;
         if (cuboids.isEmpty()) {
