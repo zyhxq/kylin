@@ -34,9 +34,9 @@ import org.slf4j.LoggerFactory;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
 
-public class CuboidStatsUtil {
+public class CuboidStatsReaderUtil {
 
-    private static final Logger logger = LoggerFactory.getLogger(CuboidStatsUtil.class);
+    private static final Logger logger = LoggerFactory.getLogger(CuboidStatsReaderUtil.class);
 
     public static Map<Long, Long> readCuboidStatsFromCube(Set<Long> cuboidIds, CubeInstance cubeInstance)
             throws IOException {

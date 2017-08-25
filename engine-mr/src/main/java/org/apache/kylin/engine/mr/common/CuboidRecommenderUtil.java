@@ -62,7 +62,7 @@ public class CuboidRecommenderUtil {
     public static Map<Long, Long> getRecommendCuboidList(CubeInstance cube, Map<Long, Long> hitFrequencyMap,
             Map<Long, Map<Long, Long>> rollingUpCountSourceMap) throws IOException {
 
-        Pair<Map<Long, Long>, Map<Long, Double>> statsPair = CuboidStatsUtil
+        Pair<Map<Long, Long>, Map<Long, Double>> statsPair = CuboidStatsReaderUtil
                 .readCuboidStatsAndSizeFromCube(cube.getCuboidScheduler().getAllCuboidIds(), cube);
 
         String key = cube.getName();
