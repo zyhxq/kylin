@@ -20,16 +20,13 @@ package org.apache.kylin.cube.inmemcubing;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.PriorityQueue;
-import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentNavigableMap;
-import java.util.concurrent.TimeUnit;
 
 import org.apache.kylin.common.util.ByteArray;
 import org.apache.kylin.common.util.Dictionary;
@@ -55,7 +52,7 @@ public class DoggedCubeBuilder extends AbstractInMemCubeBuilder {
     private static Logger logger = LoggerFactory.getLogger(DoggedCubeBuilder.class);
 
     private int splitRowThreshold = Integer.MAX_VALUE;
-    private int unitRows = 1000;
+    private int unitRows = ConsumeBlockingQueueController.DEFAULT_BATCH_SIZE;
 
     public DoggedCubeBuilder(CuboidScheduler cuboidScheduler, IJoinedFlatTableDesc flatDesc,
             Map<TblColRef, Dictionary<String>> dictionaryMap) {
@@ -72,8 +69,9 @@ public class DoggedCubeBuilder extends AbstractInMemCubeBuilder {
     }
 
     @Override
-    public void build(BlockingQueue<List<String>> input, ICuboidWriter output) throws IOException {
-        new BuildOnce().build(input, output);
+    public <T> void build(BlockingQueue<T> input, InputConverterUnit<T> inputConverterUnit, ICuboidWriter output)
+            throws IOException {
+        new BuildOnce().build(input, inputConverterUnit, output);
     }
 
     private class BuildOnce {
@@ -81,7 +79,8 @@ public class DoggedCubeBuilder extends AbstractInMemCubeBuilder {
         BuildOnce() {
         }
 
-        public void build(BlockingQueue<List<String>> input, ICuboidWriter output) throws IOException {
+        public <T> void build(BlockingQueue<T> input, InputConverterUnit<T> inputConverterUnit, ICuboidWriter output)
+                throws IOException {
             final List<SplitThread> splits = new ArrayList<SplitThread>();
             final Merger merger = new Merger();
 
@@ -90,26 +89,26 @@ public class DoggedCubeBuilder extends AbstractInMemCubeBuilder {
 
             try {
                 SplitThread last = null;
-                boolean eof = false;
-
-                while (!eof) {
-
+                while (true) {
                     if (last != null && shouldCutSplit(splits)) {
                         cutSplit(last);
                         last = null;
                     }
-
                     checkException(splits);
-
                     if (last == null) {
-                        last = new SplitThread();
+                        last = new SplitThread(splits.size() + 1, RecordConsumeBlockingQueueController
+                                .getQueueController(inputConverterUnit, input, unitRows));
                         splits.add(last);
                         last.start();
                         logger.info("Split #" + splits.size() + " kickoff");
                     }
-
-                    eof = feedSomeInput(input, last, unitRows);
+                    if (last.inputController.ifEnd()) {
+                        break;
+                    }
+                    Thread.sleep(100);
                 }
+
+                logger.info("Has finished feeding data!!!");
 
                 for (SplitThread split : splits) {
                     split.join();
@@ -203,46 +202,18 @@ public class DoggedCubeBuilder extends AbstractInMemCubeBuilder {
             }
         }
 
-        private boolean feedSomeInput(BlockingQueue<List<String>> input, SplitThread split, int n) {
-            try {
-                int i = 0;
-                while (i < n) {
-                    List<String> record = input.take();
-                    i++;
-
-                    while (split.inputQueue.offer(record, 1, TimeUnit.SECONDS) == false) {
-                        if (split.exception != null)
-                            return true; // got some error
-                    }
-                    split.inputRowCount++;
-
-                    if (record == null || record.isEmpty()) {
-                        return true;
-                    }
-                }
-                return false;
-
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                throw new RuntimeException(e);
-            }
-        }
-
         private void cutSplit(SplitThread last) {
             try {
                 // signal the end of input
                 while (last.isAlive()) {
-                    if (last.inputQueue.offer(Collections.<String> emptyList())) {
-                        break;
-                    }
-                    Thread.sleep(1000);
+                    last.inputController.forceCutPipe();
+                    break;
                 }
 
                 // wait cuboid build done
                 last.join();
 
             } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
                 throw new RuntimeException(e);
             }
         }
@@ -250,7 +221,7 @@ public class DoggedCubeBuilder extends AbstractInMemCubeBuilder {
         private boolean shouldCutSplit(List<SplitThread> splits) {
             int systemAvailMB = MemoryBudgetController.getSystemAvailMB();
             int nSplit = splits.size();
-            long splitRowCount = nSplit == 0 ? 0 : splits.get(nSplit - 1).inputRowCount;
+            long splitRowCount = nSplit == 0 ? 0 : splits.get(nSplit - 1).inputController.getOutputRowCountAfterCut();
 
             logger.info(splitRowCount + " records went into split #" + nSplit + "; " + systemAvailMB + " MB left, " + reserveMemoryMB + " MB threshold");
 
@@ -269,14 +240,15 @@ public class DoggedCubeBuilder extends AbstractInMemCubeBuilder {
     }
 
     private class SplitThread extends Thread {
-        final BlockingQueue<List<String>> inputQueue = new ArrayBlockingQueue<List<String>>(16);
+        final RecordConsumeBlockingQueueController<?> inputController;
         final InMemCubeBuilder builder;
 
         ConcurrentNavigableMap<Long, CuboidResult> buildResult;
-        long inputRowCount = 0;
         RuntimeException exception;
 
-        public SplitThread() {
+        public SplitThread(final int num, final RecordConsumeBlockingQueueController<?> inputController) {
+            super("SplitThread" + num);
+            this.inputController = inputController;
             this.builder = new InMemCubeBuilder(cuboidScheduler, flatDesc, dictionaryMap);
             this.builder.setConcurrentThreads(taskThreadCount);
             this.builder.setReserveMemoryMB(reserveMemoryMB);
@@ -285,12 +257,13 @@ public class DoggedCubeBuilder extends AbstractInMemCubeBuilder {
         @Override
         public void run() {
             try {
-                buildResult = builder.build(inputQueue);
+                buildResult = builder.build(inputController);
             } catch (Exception e) {
                 if (e instanceof RuntimeException)
                     this.exception = (RuntimeException) e;
                 else
                     this.exception = new RuntimeException(e);
+                inputController.findException();
             }
         }
     }

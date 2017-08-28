@@ -330,7 +330,7 @@ public class CubeInstance extends RootPersistentEntity implements IRealization, 
     }
 
     public Set<Long> getCuboidsByMode(String cuboidModeName) {
-        return getCuboidsByMode(CuboidModeEnum.getByModeName(cuboidModeName));
+        return getCuboidsByMode(cuboidModeName == null ? null : CuboidModeEnum.getByModeName(cuboidModeName));
     }
 
     public Set<Long> getCuboidsByMode(CuboidModeEnum cuboidMode) {
